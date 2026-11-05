@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17130f" />
+  <meta name="description" content="Foodie Cafe — fresh coffee, handcrafted bites and good vibes." />
+  <title>Foodie Cafe | Good food. Good mood.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="announcement">Freshly brewed happiness, served daily <span>✦</span> Open 9 AM – 10 PM</div>
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="Foodie Cafe home"><span class="brand-mark">f.</span><span>foodie<span class="brand-light">cafe</span><small>GOOD FOOD. GOOD MOOD.</small></span></a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+    <nav id="nav">
+      <a href="#home">Home</a><a href="#menu">Our Menu</a><a href="#story">Our Story</a><a href="#visit">Visit Us</a>
+      <button class="cart-button" id="cartOpen">Your order <span id="cartCount">0</span></button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> YOUR HAPPY PLACE</p>
+        <h1>A little taste<br>of <em>happiness.</em></h1>
+        <p class="hero-text">From slow mornings to late-night cravings, find your new favourite flavour at Foodie Cafe.</p>
+        <div class="hero-actions"><a class="button button-primary" href="#menu">Explore the menu <span>↗</span></a><a class="text-link" href="#story">Discover our story <span>→</span></a></div>
+        <div class="hero-note"><div class="avatars"><b>F</b><b>♥</b><b>+</b></div><span><strong>Made with love</strong><br>and the freshest ingredients</span></div>
+      </div>
+      <div class="hero-visual">
+        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=85" alt="Fresh coffee and cafe treats on a table">
+        <div class="floating-card"><span class="star">✦</span><div><strong>Good vibes</strong><small>in every bite</small></div></div>
+        <div class="round-stamp">FRESH<br>• DAILY •<br>MADE</div>
+      </div>
+    </section>
+
+    <section class="perks">
+      <div><span>☕</span><p><strong>Freshly brewed</strong><small>Every single cup</small></p></div>
+      <div><span>🥐</span><p><strong>Made with care</strong><small>Quality ingredients</small></p></div>
+      <div><span>♡</span><p><strong>Feel-good food</strong><small>For every mood</small></p></div>
+      <div><span>✦</span><p><strong>Cozy moments</strong><small>Come as you are</small></p></div>
+    </section>
+
+    <section class="menu-section section-pad" id="menu">
+      <div class="section-heading">
+        <div><p class="eyebrow">A MENU TO FALL FOR</p><h2>Made fresh.<br><em>Made for you.</em></h2></div>
+        <p>Comfort-food classics, cafe favourites and little treats that make your day better.</p>
+      </div>
+      <div class="menu-tools">
+        <div class="filters" id="filters">
+          <button class="filter active" data-category="all">All items</button>
+          <button class="filter" data-category="coffee">Coffee</button>
+          <button class="filter" data-category="food">Food</button>
+          <button class="filter" data-category="dessert">Desserts</button>
+          <button class="filter" data-category="drinks">Drinks</button>
+        </div>
+        <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Find your craving..." aria-label="Search menu"></label>
+      </div>
+      <div class="menu-grid" id="menuGrid"></div>
+      <p class="menu-footnote">Menu prices are sample prices for this demo and can be edited in <code>script.js</code>.</p>
+    </section>
+
+    <section class="story-section" id="story">
+      <div class="story-image"><img src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1100&q=85" alt="Barista preparing a cup of coffee"><span>EST. WITH<br>PASSION ♡</span></div>
+      <div class="story-copy"><p class="eyebrow">MORE THAN JUST A CAFE</p><h2>Where every<br>moment feels<br><em>a little warmer.</em></h2><p>We believe the best memories happen around a table. Foodie Cafe brings together comforting flavours, freshly made favourites and a welcoming space to pause, connect and enjoy.</p><a class="button button-dark" href="#visit">Come say hello <span>↗</span></a></div>
+    </section>
+
+    <section class="quote-section"><span>“</span><p>Good food is the<br>beginning of a good day.</p><small>THE FOODIE CAFE WAY</small></section>
+
+    <section class="visit-section section-pad" id="visit">
+      <div><p class="eyebrow">COME ON IN</p><h2>Your table<br>is <em>waiting.</em></h2><p class="visit-intro">Drop by for your daily coffee, bring your favourite people, or simply stay a little longer.</p>
+        <div class="visit-details"><div><span>⌖</span><p><strong>Find us</strong><small>Your cafe address, City, India</small></p></div><div><span>◷</span><p><strong>Opening hours</strong><small>Every day · 9:00 AM – 10:00 PM</small></p></div><div><span>☎</span><p><strong>Say hello</strong><small>+91 98765 43210</small></p></div></div>
+      </div>
+      <div class="visit-card"><div class="map-art"><span>FOODIE<br>CAFE</span><i>✦</i><b>⌖</b></div><h3>Let's make it a coffee date.</h3><p>Good coffee. Great company. No rush.</p><a class="button button-primary" href="https://www.google.com/maps" target="_blank" rel="noreferrer">Get directions ↗</a></div>
+    </section>
+  </main>
+
+  <footer><a class="brand footer-brand" href="#home"><span class="brand-mark">f.</span><span>foodie<span class="brand-light">cafe</span><small>GOOD FOOD. GOOD MOOD.</small></span></a><p>Made for moments worth savouring. © <span id="year"></span> Foodie Cafe.</p><a href="#home">Back to top ↑</a></footer>
+
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Your order" aria-hidden="true">
+    <div class="cart-head"><div><p class="eyebrow">YOUR LITTLE FEAST</p><h2>Your order</h2></div><button id="cartClose" aria-label="Close cart">×</button></div>
+    <div id="cartItems" class="cart-items"><p class="empty-cart">Your basket is waiting for something delicious.</p></div>
+    <div class="cart-bottom"><div><span>Subtotal</span><strong id="cartTotal">₹0</strong></div><button class="button button-primary checkout" id="checkout">Place demo order <span>→</span></button><small>This is a frontend demo. No payment will be collected.</small></div>
+  </aside>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="script.js"></script>
+</body>
+</html>
