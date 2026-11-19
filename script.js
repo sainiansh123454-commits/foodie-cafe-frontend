@@ -1,83 +1,68 @@
 
+// ==========================================
+// FOODIE CAFE - COMPLETE FRONTEND SCRIPT
+// ==========================================
+
 const API_URL = "https://foodie-cafe-backend-1.onrender.com/api/menu";
 const ORDER_API = "https://foodie-cafe-backend-1.onrender.com/api/orders";
 const AUTH_API = "https://foodie-cafe-backend-1.onrender.com/api/auth";
+
+// ==========================================
+// GLOBAL VARIABLES
+// ==========================================
 
 let menuItems = [];
 let cart = [];
 let activeCategory = "all";
 
-const grid = document.getElementById("menuGrid");
-const cartOverlay = document.getElementById("cartOverlay");
-const cartItemsContainer = document.getElementById("cartItems");
+let token = localStorage.getItem("foodieToken") || "";
+let currentUser = JSON.parse(localStorage.getItem("foodieUser") || "null");
 
-// ================= BASIC HELPERS =================
+// ==========================================
+// HTML ELEMENTS
+// ==========================================
+
+const menuGrid = document.getElementById("menuGrid");
+const menuSearch = document.getElementById("menuSearch");
+
+const cartOverlay = document.getElementById("cartOverlay");
+const cartItemsElement = document.getElementById("cartItems");
+const cartCount = document.getElementById("cartCount");
+const cartTotal = document.getElementById("cartTotal");
+
+const authOverlay = document.getElementById("authOverlay");
+const loginForm = document.getElementById("loginForm");
+const signupForm = document.getElementById("signupForm");
 
 const rupees = amount =>
-  "₹" + Number(amount || 0).toLocaleString("en-IN");
+  "₹" + Number(amount).toLocaleString("en-IN");
 
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
-}
+function showToast(message) {
+  const toast = document.getElementById("toast");
 
-function getItemName(item) {
-  return item.name || item.title || item.itemName || "Food Item";
-}
-
-function getItemImage(item) {
-  return item.image || item.imageUrl || item.photo ||
-    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600";
-}
-
-// Normalize categories so different names are recognized.
-function getItemCategory(item) {
-  const category = String(item.category || "").toLowerCase().trim();
-  const name = getItemName(item).toLowerCase();
-
-  if (
-    category.includes("drink") ||
-    category.includes("beverage") ||
-    category.includes("coffee") ||
-    category.includes("juice")
-  ) {
-    return "drinks";
+  if (!toast) {
+    alert(message);
+    return;
   }
 
-  if (category.includes("pizza") || name.includes("pizza")) {
-    return "pizza";
-  }
+  toast.textContent = message;
+  toast.classList.add("show");
 
-  if (
-    category.includes("burger") ||
-    category.includes("burgers") ||
-    name.includes("burger")
-  ) {
-    return "burger";
-  }
+  clearTimeout(window.foodieToastTimer);
 
-  if (category.includes("pasta") || name.includes("pasta")) {
-    return "pasta";
-  }
-
-  return category;
+  window.foodieToastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
 }
 
-function getItemId(item) {
-  return String(item._id || item.id || "");
-}
-
-// ================= LOAD MENU =================
+// ==========================================
+// LOAD MENU FROM BACKEND
+// ==========================================
 
 async function loadMenu() {
-  grid.innerHTML = "<p>Loading delicious food...</p>";
-
   try {
+    menuGrid.innerHTML = "<p>Loading delicious food...</p>";
+
     const response = await fetch(API_URL);
     const result = await response.json();
 
@@ -85,97 +70,102 @@ async function loadMenu() {
       throw new Error(result.message || "Unable to load menu.");
     }
 
-    menuItems = result.data || [];
+    menuItems = result.data.filter(item => item.available !== false);
 
-    console.log("Food menu loaded:", menuItems);
-
-    renderMenu();
+    displayMenu();
 
   } catch (error) {
     console.error("Menu error:", error);
-    grid.innerHTML =
-      "<p>Menu could not be loaded. Please refresh the page.</p>";
+
+    menuGrid.innerHTML =
+      "<p>Unable to load menu. Please refresh the page.</p>";
   }
 }
 
-// ================= DISPLAY MENU =================
+// ==========================================
+// DISPLAY MENU
+// ==========================================
 
-function renderMenu() {
-  const searchInput = document.getElementById("menuSearch");
-  const search = searchInput.value.toLowerCase().trim();
+function displayMenu() {
+  const searchText = menuSearch.value.toLowerCase().trim();
 
-  const filteredItems = menuItems.filter(item => {
-    const name = getItemName(item).toLowerCase();
-    const description = String(
-      item.description || item.desc || ""
-    ).toLowerCase();
-
-    const category = getItemCategory(item);
-
-    const matchesCategory =
-      activeCategory === "all" ||
-      category === activeCategory;
-
+  let filteredItems = menuItems.filter(item => {
     const matchesSearch =
-      name.includes(search) ||
-      description.includes(search);
+      item.name.toLowerCase().includes(searchText) ||
+      item.category.toLowerCase().includes(searchText);
 
-    return matchesCategory && matchesSearch;
+    let matchesCategory = true;
+
+    if (activeCategory === "drinks") {
+      matchesCategory =
+        item.category === "drinks" ||
+        item.category === "coffee";
+    } else if (activeCategory !== "all") {
+      matchesCategory = item.category === activeCategory;
+    }
+
+    return matchesSearch && matchesCategory;
   });
 
   if (filteredItems.length === 0) {
-    grid.innerHTML = "<p>No food items found.</p>";
+    menuGrid.innerHTML = "<p>No food items found.</p>";
     return;
   }
 
-  grid.innerHTML = filteredItems.map(item => {
-    const id = escapeHTML(getItemId(item));
-    const name = escapeHTML(getItemName(item));
-    const description = escapeHTML(
-      item.description || item.desc || "Fresh and delicious."
-    );
-    const image = escapeHTML(getItemImage(item));
-    const price = Number(item.price || 0);
+  menuGrid.innerHTML = filteredItems.map(item => `
+    <div class="menu-card">
 
-    return `
-      <article class="menu-card">
+      <img
+        src="${escapeHTML(item.image || "")}"
+        alt="${escapeHTML(item.name)}"
+        loading="lazy"
+        onerror="this.src='https://placehold.co/600x400?text=Foodie+Cafe'">
 
-        <img
-          src="${image}"
-          alt="${name}"
-          loading="lazy"
-          onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600';">
+      <div class="menu-card-content">
 
-        <div class="menu-info">
+        <span class="menu-tag">
+          ${escapeHTML(item.tag || "")}
+        </span>
 
-          <h3>${name}</h3>
+        <h3>${escapeHTML(item.name)}</h3>
 
-          <p>${description}</p>
+        <p>${escapeHTML(item.desc || "")}</p>
 
-          <div class="menu-meta">
+        <div class="menu-card-bottom">
 
-            <strong>${rupees(price)}</strong>
+          <strong>${rupees(item.price)}</strong>
 
-            <button
-              class="add-button"
-              onclick="addToCart('${id}')">
-              + Add
-            </button>
-
-          </div>
+          <button
+            class="button add-cart-btn"
+            data-id="${Number(item.id)}">
+            Add to Cart
+          </button>
 
         </div>
-      </article>
-    `;
-  }).join("");
+      </div>
+    </div>
+  `).join("");
 }
 
-// ================= CATEGORY FILTER =================
+// Prevent HTML injection from database text.
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[character]);
+}
+
+// ==========================================
+// MENU SEARCH AND FILTERS
+// ==========================================
+
+menuSearch.addEventListener("input", displayMenu);
 
 document.querySelectorAll(".filter-btn").forEach(button => {
-
   button.addEventListener("click", () => {
-
     document.querySelectorAll(".filter-btn").forEach(btn => {
       btn.classList.remove("active");
     });
@@ -184,196 +174,217 @@ document.querySelectorAll(".filter-btn").forEach(button => {
 
     activeCategory = button.dataset.category;
 
-    renderMenu();
-
+    displayMenu();
   });
-
 });
 
-// ================= SEARCH =================
+// ==========================================
+// ADD ITEMS TO CART
+// ==========================================
 
-document.getElementById("menuSearch").addEventListener(
-  "input",
-  renderMenu
-);
+menuGrid.addEventListener("click", event => {
+  const button = event.target.closest(".add-cart-btn");
 
-// ================= ADD TO CART =================
+  if (!button) return;
 
-function addToCart(id) {
+  const itemId = Number(button.dataset.id);
 
-  const item = menuItems.find(
-    food => getItemId(food) === String(id)
+  const product = menuItems.find(item =>
+    Number(item.id) === itemId
   );
 
-  if (!item) {
-    showToast("Food item not found.");
+  if (!product) {
+    showToast("Product not found.");
     return;
   }
 
-  const existingItem = cart.find(
-    food => getItemId(food) === String(id)
+  const existingItem = cart.find(item =>
+    Number(item.id) === itemId
   );
 
   if (existingItem) {
     existingItem.quantity++;
   } else {
     cart.push({
-      ...item,
+      id: Number(product.id),
+      name: product.name,
+      price: Number(product.price),
+      image: product.image,
       quantity: 1
     });
   }
 
-  updateCart();
+  renderCart();
+  showToast(product.name + " added to cart!");
+});
 
-  showToast(getItemName(item) + " added to cart!");
-}
+// ==========================================
+// CART DISPLAY
+// ==========================================
 
-// ================= CHANGE QUANTITY =================
-
-function changeQuantity(id, change) {
-
-  const item = cart.find(
-    food => getItemId(food) === String(id)
-  );
-
-  if (!item) return;
-
-  item.quantity += change;
-
-  if (item.quantity <= 0) {
-    cart = cart.filter(
-      food => getItemId(food) !== String(id)
-    );
-  }
-
-  updateCart();
-}
-
-// ================= UPDATE CART =================
-
-function updateCart() {
-
-  const count = cart.reduce(
+function renderCart() {
+  const totalQuantity = cart.reduce(
     (sum, item) => sum + item.quantity,
     0
   );
 
-  const total = cart.reduce(
-    (sum, item) =>
-      sum + Number(item.price || 0) * item.quantity,
+  const totalAmount = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  document.getElementById("cartCount").textContent = count;
-
-  document.getElementById("cartTotal").textContent =
-    rupees(total);
+  cartCount.textContent = totalQuantity;
+  cartTotal.textContent = rupees(totalAmount);
 
   if (cart.length === 0) {
-    cartItemsContainer.innerHTML =
-      "<p>Your cart is empty.</p>";
-
+    cartItemsElement.innerHTML = "<p>Your cart is empty.</p>";
     return;
   }
 
-  cartItemsContainer.innerHTML = cart.map(item => {
+  cartItemsElement.innerHTML = cart.map(item => `
+    <div class="cart-item">
 
-    const id = escapeHTML(getItemId(item));
-    const name = escapeHTML(getItemName(item));
+      <div>
+        <h3>${escapeHTML(item.name)}</h3>
+        <p>${rupees(item.price)} × ${item.quantity}</p>
+        <strong>${rupees(item.price * item.quantity)}</strong>
+      </div>
 
-    return `
-      <div class="cart-row">
+      <div class="cart-item-controls">
 
-        <div>
-          <strong>${name}</strong>
-          <p>${rupees(item.price)} × ${item.quantity}</p>
-        </div>
+        <button data-action="decrease" data-id="${item.id}">
+          −
+        </button>
 
-        <div class="quantity">
+        <span>${item.quantity}</span>
 
-          <button onclick="changeQuantity('${id}', -1)">
-            −
-          </button>
+        <button data-action="increase" data-id="${item.id}">
+          +
+        </button>
 
-          <span>${item.quantity}</span>
-
-          <button onclick="changeQuantity('${id}', 1)">
-            +
-          </button>
-
-        </div>
+        <button data-action="remove" data-id="${item.id}">
+          Remove
+        </button>
 
       </div>
-    `;
-
-  }).join("");
+    </div>
+  `).join("");
 }
 
-// ================= OPEN / CLOSE CART =================
+// ==========================================
+// CART QUANTITY CONTROLS
+// ==========================================
 
-document.getElementById("cartButton").addEventListener(
-  "click",
-  () => cartOverlay.classList.add("active")
-);
+cartItemsElement.addEventListener("click", event => {
+  const button = event.target.closest("button[data-action]");
 
-document.getElementById("closeCart").addEventListener(
-  "click",
-  () => cartOverlay.classList.remove("active")
-);
+  if (!button) return;
+
+  const itemId = Number(button.dataset.id);
+  const action = button.dataset.action;
+
+  const item = cart.find(product =>
+    Number(product.id) === itemId
+  );
+
+  if (!item) return;
+
+  if (action === "increase") {
+    item.quantity++;
+  }
+
+  if (action === "decrease") {
+    item.quantity--;
+
+    if (item.quantity <= 0) {
+      cart = cart.filter(product =>
+        Number(product.id) !== itemId
+      );
+    }
+  }
+
+  if (action === "remove") {
+    cart = cart.filter(product =>
+      Number(product.id) !== itemId
+    );
+  }
+
+  renderCart();
+});
+
+// ==========================================
+// OPEN AND CLOSE CART
+// ==========================================
+
+document.getElementById("cartButton").addEventListener("click", () => {
+  cartOverlay.classList.add("active");
+});
+
+document.getElementById("closeCart").addEventListener("click", () => {
+  cartOverlay.classList.remove("active");
+});
 
 cartOverlay.addEventListener("click", event => {
-
   if (event.target === cartOverlay) {
     cartOverlay.classList.remove("active");
   }
-
 });
 
-// ================= CHECKOUT =================
+// ==========================================
+// PLACE ORDER - BACKEND CONNECTION
+// ==========================================
 
-async function checkout() {
+document.getElementById("checkoutButton").addEventListener(
+  "click",
+  placeOrder
+);
 
+async function placeOrder() {
   if (cart.length === 0) {
     showToast("Your cart is empty!");
     return;
   }
 
-  const customerName = prompt("Enter your full name:");
-
-  if (!customerName || !customerName.trim()) return;
-
-  const phone = prompt("Enter your mobile number:");
-
-  if (!phone || !/^[6-9]\d{9}$/.test(phone.trim())) {
-    showToast("Enter a valid 10-digit mobile number.");
+  if (!currentUser) {
+    showToast("Please login before placing an order.");
+    openAuth("login");
     return;
   }
 
-  const address = prompt("Enter your complete delivery address:");
+  const customerName = currentUser.name;
 
-  if (!address || !address.trim()) return;
-
-  const total = cart.reduce(
-    (sum, item) =>
-      sum + Number(item.price || 0) * item.quantity,
-    0
+  const mobile = prompt(
+    "Enter your 10-digit mobile number for order delivery:"
   );
 
-  const order = {
-    customerName: customerName.trim(),
-    phone: phone.trim(),
-    address: address.trim(),
+  if (mobile === null) return;
 
-    items: cart.map(item => ({
-      name: getItemName(item),
-      price: Number(item.price || 0),
-      quantity: item.quantity
-    })),
+  const cleanMobile = mobile.replace(/\D/g, "");
 
-    total
-  };
+  if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
+    showToast("Please enter a valid 10-digit mobile number.");
+    return;
+  }
+
+  const orderButton = document.getElementById("checkoutButton");
+
+  const originalText = orderButton.textContent;
 
   try {
+    orderButton.disabled = true;
+    orderButton.textContent = "Submitting Order...";
+
+    const orderData = {
+      customerName: customerName,
+      mobile: cleanMobile,
+
+      items: cart.map(item => ({
+        id: Number(item.id),
+        quantity: Number(item.quantity)
+      }))
+    };
+
+    console.log("Submitting order:", orderData);
 
     const response = await fetch(ORDER_API, {
       method: "POST",
@@ -382,424 +393,321 @@ async function checkout() {
         "Content-Type": "application/json"
       },
 
-      body: JSON.stringify(order)
+      body: JSON.stringify(orderData)
     });
 
     const result = await response.json();
 
+    console.log("Order response:", result);
+
     if (!response.ok || result.success === false) {
       throw new Error(
-        result.message || "Order could not be placed."
+        result.message || result.error || "Order submission failed."
       );
     }
 
-    showToast("Your order has been placed successfully!");
-
     cart = [];
-
-    updateCart();
+    renderCart();
 
     cartOverlay.classList.remove("active");
 
+    showToast("Your order has been placed successfully!");
+
+    alert(
+      "Thank you for ordering from Foodie Cafe!\n\n" +
+      "Your order has been submitted successfully."
+    );
+
   } catch (error) {
+    console.error("Order submission error:", error);
 
-    console.error("Order error:", error);
+    showToast("Order failed: " + error.message);
 
-    showToast(error.message || "Order failed. Try again.");
+    alert(
+      "Your order could not be submitted.\n\n" +
+      error.message +
+      "\n\nPlease try again."
+    );
 
+  } finally {
+    orderButton.disabled = false;
+    orderButton.textContent = originalText;
   }
 }
 
-document.getElementById("checkoutButton").addEventListener(
-  "click",
-  checkout
-);
-
-// ================= AUTHENTICATION =================
+// ==========================================
+// AUTHENTICATION
+// ==========================================
 
 function saveLogin(data) {
-
-  const token = data.token || data.data?.token;
-  const user = data.user || data.data?.user;
-
-  if (!token) {
-    throw new Error("Login token was not received.");
+  if (!data.token || !data.user) {
+    throw new Error("Login response is missing user or token.");
   }
+
+  token = data.token;
+  currentUser = data.user;
 
   localStorage.setItem("foodieToken", token);
-
-  if (user) {
-    localStorage.setItem(
-      "foodieUser",
-      JSON.stringify(user)
-    );
-  }
+  localStorage.setItem("foodieUser", JSON.stringify(currentUser));
 
   updateAuthUI();
 }
 
-function getLoggedInUser() {
+function updateAuthUI() {
+  const loggedIn = Boolean(token && currentUser);
 
-  try {
-    return JSON.parse(
-      localStorage.getItem("foodieUser")
-    );
-  } catch {
-    return null;
-  }
+  document.getElementById("loginBtn").hidden = loggedIn;
+  document.getElementById("signupBtn").hidden = loggedIn;
+  document.getElementById("profileBtn").hidden = !loggedIn;
+  document.getElementById("logoutBtn").hidden = !loggedIn;
 
+  document.getElementById("profileName").textContent =
+    currentUser?.name || "";
+
+  document.getElementById("profileEmail").textContent =
+    currentUser?.email || "";
 }
 
-function openAuth(mode = "login") {
+// ==========================================
+// OPEN LOGIN / SIGNUP
+// ==========================================
 
-  document.getElementById("authOverlay")
-    .classList.add("active");
-
-  showAuthForm(mode);
+function openAuth(mode) {
+  authOverlay.classList.add("active");
+  showAuthMode(mode);
 }
 
-function closeAuth() {
-
-  document.getElementById("authOverlay")
-    .classList.remove("active");
-
-}
-
-function showAuthForm(mode) {
-
+function showAuthMode(mode) {
   const isSignup = mode === "signup";
+  const isProfile = mode === "profile";
 
-  document.getElementById("loginForm").hidden = isSignup;
-
-  document.getElementById("signupForm").hidden = !isSignup;
-
-  document.getElementById("profilePanel").hidden = true;
+  loginForm.hidden = isSignup || isProfile;
+  signupForm.hidden = !isSignup;
+  document.getElementById("profilePanel").hidden = !isProfile;
 
   document.getElementById("authTitle").textContent =
-    isSignup ? "Create Account" : "Login";
+    isProfile ? "My Profile" : isSignup ? "Create Account" : "Login";
 
   document.getElementById("authSubtitle").textContent =
-    isSignup
-      ? "Join Foodie Cafe today!"
-      : "Welcome back! Please sign in.";
+    isProfile
+      ? "Your Foodie Cafe account"
+      : isSignup
+        ? "Join Foodie Cafe today!"
+        : "Welcome back! Please sign in.";
 
   document.getElementById("authMessage").textContent = "";
 }
 
-function updateAuthUI() {
+document.getElementById("loginBtn").addEventListener("click", () => {
+  openAuth("login");
+});
 
-  const token = localStorage.getItem("foodieToken");
+document.getElementById("signupBtn").addEventListener("click", () => {
+  openAuth("signup");
+});
 
-  document.getElementById("loginBtn").hidden = !!token;
-  document.getElementById("signupBtn").hidden = !!token;
-  document.getElementById("profileBtn").hidden = !token;
-  document.getElementById("logoutBtn").hidden = !token;
-}
+document.getElementById("profileBtn").addEventListener("click", () => {
+  openAuth("profile");
+});
 
-async function authRequest(endpoint, body) {
+document.getElementById("showSignup").addEventListener("click", () => {
+  showAuthMode("signup");
+});
 
-  const response = await fetch(
-    `${AUTH_API}/${endpoint}`,
-    {
+document.getElementById("showLogin").addEventListener("click", () => {
+  showAuthMode("login");
+});
+
+document.getElementById("authClose").addEventListener("click", () => {
+  authOverlay.classList.remove("active");
+});
+
+authOverlay.addEventListener("click", event => {
+  if (event.target === authOverlay) {
+    authOverlay.classList.remove("active");
+  }
+});
+
+// ==========================================
+// CUSTOMER SIGNUP
+// ==========================================
+
+signupForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const name = document.getElementById("signupName").value.trim();
+  const email = document.getElementById("signupEmail").value.trim();
+  const password = document.getElementById("signupPassword").value;
+
+  try {
+    const response = await fetch(AUTH_API + "/register", {
       method: "POST",
 
       headers: {
         "Content-Type": "application/json"
       },
 
-      body: JSON.stringify(body)
-    }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok || result.success === false) {
-    throw new Error(
-      result.message || "Authentication failed."
-    );
-  }
-
-  return result;
-}
-
-// ================= SIGN UP =================
-
-document.getElementById("signupForm").addEventListener(
-  "submit",
-  async event => {
-
-    event.preventDefault();
-
-    const name = document.getElementById("signupName")
-      .value.trim();
-
-    const email = document.getElementById("signupEmail")
-      .value.trim();
-
-    const password = document.getElementById("signupPassword")
-      .value;
-
-    const message = document.getElementById("authMessage");
-
-    message.textContent = "Creating your account...";
-
-    try {
-
-      const result = await authRequest("register", {
+      body: JSON.stringify({
         name,
         email,
         password
-      });
-
-      if (result.token || result.data?.token) {
-
-        saveLogin(result);
-
-        closeAuth();
-
-        showToast("Account created successfully!");
-
-      } else {
-
-        document.getElementById("loginEmail").value = email;
-
-        showAuthForm("login");
-
-        message.textContent =
-          "Account created! Please log in.";
-
-      }
-
-    } catch (error) {
-
-      message.textContent = error.message;
-
-    }
-
-  }
-);
-
-// ================= LOGIN =================
-
-document.getElementById("loginForm").addEventListener(
-  "submit",
-  async event => {
-
-    event.preventDefault();
-
-    const email = document.getElementById("loginEmail")
-      .value.trim();
-
-    const password = document.getElementById("loginPassword")
-      .value;
-
-    const message = document.getElementById("authMessage");
-
-    message.textContent = "Signing in...";
-
-    try {
-
-      const result = await authRequest("login", {
-        email,
-        password
-      });
-
-      saveLogin(result);
-
-      closeAuth();
-
-      showToast("Welcome to Foodie Cafe!");
-
-    } catch (error) {
-
-      message.textContent = error.message;
-
-    }
-
-  }
-);
-
-// ================= CUSTOMER PROFILE =================
-
-async function loadProfile() {
-
-  const token = localStorage.getItem("foodieToken");
-
-  if (!token) {
-    openAuth("login");
-    return;
-  }
-
-  try {
-
-    const response = await fetch(
-      `${AUTH_API}/me`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+      })
+    });
 
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(
-        result.message || "Please log in again."
-      );
+      throw new Error(result.message || "Signup failed.");
     }
 
-    const user =
-      result.user ||
-      result.data?.user ||
-      result.data;
+    saveLogin(result);
 
-    localStorage.setItem(
-      "foodieUser",
-      JSON.stringify(user)
-    );
+    signupForm.reset();
+    authOverlay.classList.remove("active");
 
-    document.getElementById("profileName").textContent =
-      user.name || "";
-
-    document.getElementById("profileEmail").textContent =
-      user.email || "";
-
-    document.getElementById("loginForm").hidden = true;
-
-    document.getElementById("signupForm").hidden = true;
-
-    document.getElementById("profilePanel").hidden = false;
-
-    document.getElementById("authTitle").textContent =
-      "My Profile";
-
-    document.getElementById("authSubtitle").textContent =
-      "Your Foodie Cafe account";
-
-    document.getElementById("authMessage").textContent = "";
-
-    document.getElementById("authOverlay")
-      .classList.add("active");
+    showToast("Account created successfully!");
 
   } catch (error) {
+    console.error("Signup error:", error);
 
-    logout();
-
-    showToast(error.message);
-
+    document.getElementById("authMessage").textContent =
+      error.message;
   }
-}
+});
 
-// ================= LOGOUT =================
+// ==========================================
+// CUSTOMER LOGIN
+// ==========================================
+
+loginForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  try {
+    const response = await fetch(AUTH_API + "/login", {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        email,
+        password
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Login failed.");
+    }
+
+    saveLogin(result);
+
+    loginForm.reset();
+    authOverlay.classList.remove("active");
+
+    showToast("Welcome back to Foodie Cafe!");
+
+  } catch (error) {
+    console.error("Login error:", error);
+
+    document.getElementById("authMessage").textContent =
+      error.message;
+  }
+});
+
+// ==========================================
+// LOGOUT
+// ==========================================
 
 function logout() {
+  token = "";
+  currentUser = null;
 
   localStorage.removeItem("foodieToken");
   localStorage.removeItem("foodieUser");
 
   updateAuthUI();
 
-  closeAuth();
+  authOverlay.classList.remove("active");
 
-  showToast("You have been logged out.");
+  showToast("You have logged out.");
 }
 
-// ================= AUTH BUTTONS =================
+document.getElementById("logoutBtn").addEventListener("click", logout);
 
-document.getElementById("loginBtn").addEventListener(
-  "click",
-  () => openAuth("login")
-);
+document.getElementById("profileLogout").addEventListener("click", logout);
 
-document.getElementById("signupBtn").addEventListener(
-  "click",
-  () => openAuth("signup")
-);
+// ==========================================
+// CHECK EXISTING LOGIN
+// ==========================================
 
-document.getElementById("showSignup").addEventListener(
-  "click",
-  () => showAuthForm("signup")
-);
+async function checkLogin() {
+  if (!token) {
+    updateAuthUI();
+    return;
+  }
 
-document.getElementById("showLogin").addEventListener(
-  "click",
-  () => showAuthForm("login")
-);
+  try {
+    const response = await fetch(AUTH_API + "/me", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
 
-document.getElementById("profileBtn").addEventListener(
-  "click",
-  loadProfile
-);
+    const result = await response.json();
 
-document.getElementById("logoutBtn").addEventListener(
-  "click",
-  logout
-);
-
-document.getElementById("profileLogout").addEventListener(
-  "click",
-  logout
-);
-
-document.getElementById("authClose").addEventListener(
-  "click",
-  closeAuth
-);
-
-document.getElementById("authOverlay").addEventListener(
-  "click",
-  event => {
-    if (event.target.id === "authOverlay") {
-      closeAuth();
+    if (!response.ok) {
+      throw new Error("Session expired.");
     }
+
+    currentUser = result.user || result.data || currentUser;
+
+    localStorage.setItem("foodieUser", JSON.stringify(currentUser));
+
+  } catch (error) {
+    console.log("Login session:", error.message);
+
+    token = "";
+    currentUser = null;
+
+    localStorage.removeItem("foodieToken");
+    localStorage.removeItem("foodieUser");
   }
-);
 
-// ================= MOBILE NAVIGATION =================
+  updateAuthUI();
+}
 
-document.getElementById("menuToggle").addEventListener(
-  "click",
-  () => {
-    document.getElementById("nav")
-      .classList.toggle("active");
-  }
-);
+// ==========================================
+// MOBILE NAVIGATION
+// ==========================================
 
-document.querySelectorAll(".nav a").forEach(link => {
-
-  link.addEventListener("click", () => {
-
-    document.getElementById("nav")
-      .classList.remove("active");
-
-  });
-
+document.getElementById("menuToggle").addEventListener("click", () => {
+  document.getElementById("nav").classList.toggle("active");
 });
 
-// ================= TOAST MESSAGE =================
+document.querySelectorAll("#nav a").forEach(link => {
+  link.addEventListener("click", () => {
+    document.getElementById("nav").classList.remove("active");
+  });
+});
 
-function showToast(message) {
-
-  const toast = document.getElementById("toast");
-
-  toast.textContent = message;
-
-  toast.classList.add("show");
-
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2500);
-
-}
-
-// ================= INITIALIZE WEBSITE =================
+// ==========================================
+// FOOTER YEAR
+// ==========================================
 
 document.getElementById("year").textContent =
   new Date().getFullYear();
 
-updateCart();
+// ==========================================
+// START WEBSITE
+// ==========================================
 
+renderCart();
 updateAuthUI();
-
+checkLogin();
 loadMenu();
