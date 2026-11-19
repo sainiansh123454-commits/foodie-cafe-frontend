@@ -1,93 +1,378 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#17130f" />
-  <meta name="description" content="Foodie Cafe — fresh coffee, handcrafted bites and good vibes." />
-  <title>Foodie Cafe | Good food. Good mood.</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Foodie Cafe - Fresh food, delicious taste and happy moments.">
+  <title>Foodie Cafe | Fresh Taste, Happy Moments</title>
+
+  <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
-  <div class="announcement">Freshly brewed happiness, served daily <span>✦</span> Open 9 AM – 10 PM</div>
-  <header class="site-header">
-    <a class="brand" href="#home" aria-label="Foodie Cafe home"><span class="brand-mark">f.</span><span>foodie<span class="brand-light">cafe</span><small>GOOD FOOD. GOOD MOOD.</small></span></a>
-    <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">☰</button>
-    <nav id="nav">
-      <a href="#home">Home</a><a href="#menu">Our Menu</a><a href="#story">Our Story</a><a href="#visit">Visit Us</a>
-      <button class="cart-button" id="cartOpen">Your order <span id="cartCount">0</span></button>
-    </nav>
+
+  <!-- NAVIGATION -->
+  <header class="header">
+    <div class="container nav-container">
+
+      <a href="#home" class="logo">
+        <span>Foodie</span> Cafe
+      </a>
+
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">
+        ☰
+      </button>
+
+      <nav class="nav" id="nav">
+        <a href="#home">Home</a>
+        <a href="#menu">Menu</a>
+        <a href="#story">Our Story</a>
+        <a href="#visit">Visit Us</a>
+
+        <button class="auth-nav-button" id="loginBtn" type="button">
+          Login
+        </button>
+
+        <button class="auth-nav-button signup-nav-button" id="signupBtn" type="button">
+          Sign Up
+        </button>
+
+        <button class="auth-nav-button" id="profileBtn" type="button" style="display:none;">
+          Profile
+        </button>
+
+        <button class="auth-nav-button" id="logoutBtn" type="button" style="display:none;">
+          Logout
+        </button>
+
+        <button class="cart-button" id="cartOpen" type="button">
+          🛒 Cart (<span id="cartCount">0</span>)
+        </button>
+      </nav>
+
+    </div>
   </header>
 
-  <main>
-    <section class="hero" id="home">
-      <div class="hero-copy">
-        <p class="eyebrow"><span></span> YOUR HAPPY PLACE</p>
-        <h1>A little taste<br>of <em>happiness.</em></h1>
-        <p class="hero-text">From slow mornings to late-night cravings, find your new favourite flavour at Foodie Cafe.</p>
-        <div class="hero-actions"><a class="button button-primary" href="#menu">Explore the menu <span>↗</span></a><a class="text-link" href="#story">Discover our story <span>→</span></a></div>
-        <div class="hero-note"><div class="avatars"><b>F</b><b>♥</b><b>+</b></div><span><strong>Made with love</strong><br>and the freshest ingredients</span></div>
-      </div>
-      <div class="hero-visual">
-        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=85" alt="Fresh coffee and cafe treats on a table">
-        <div class="floating-card"><span class="star">✦</span><div><strong>Good vibes</strong><small>in every bite</small></div></div>
-        <div class="round-stamp">FRESH<br>• DAILY •<br>MADE</div>
-      </div>
-    </section>
 
-    <section class="perks">
-      <div><span>☕</span><p><strong>Freshly brewed</strong><small>Every single cup</small></p></div>
-      <div><span>🥐</span><p><strong>Made with care</strong><small>Quality ingredients</small></p></div>
-      <div><span>♡</span><p><strong>Feel-good food</strong><small>For every mood</small></p></div>
-      <div><span>✦</span><p><strong>Cozy moments</strong><small>Come as you are</small></p></div>
-    </section>
+  <!-- HERO SECTION -->
+  <section class="hero" id="home">
+    <div class="container hero-content">
 
-    <section class="menu-section section-pad" id="menu">
+      <div class="hero-text">
+        <p class="section-label">WELCOME TO FOODIE CAFE</p>
+
+        <h1>
+          Fresh Taste.<br>
+          <span>Happy Moments.</span>
+        </h1>
+
+        <p>
+          Enjoy delicious food, freshly prepared with love.
+          Every bite brings a little happiness to your day.
+        </p>
+
+        <a href="#menu" class="primary-button">Explore Our Menu</a>
+      </div>
+
+      <div class="hero-image">
+        <img
+          src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900"
+          alt="Delicious cafe food"
+        >
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- FEATURES SECTION -->
+  <section class="features">
+    <div class="container features-grid">
+
+      <div class="feature">
+        <h3>Fresh Ingredients</h3>
+        <p>Fresh and quality ingredients in every dish.</p>
+      </div>
+
+      <div class="feature">
+        <h3>Made With Love</h3>
+        <p>Every meal is prepared with care and passion.</p>
+      </div>
+
+      <div class="feature">
+        <h3>Great Taste</h3>
+        <p>Delicious flavours for every food lover.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- MENU SECTION -->
+  <section class="menu-section" id="menu">
+    <div class="container">
+
       <div class="section-heading">
-        <div><p class="eyebrow">A MENU TO FALL FOR</p><h2>Made fresh.<br><em>Made for you.</em></h2></div>
-        <p>Comfort-food classics, cafe favourites and little treats that make your day better.</p>
+        <p class="section-label">OUR MENU</p>
+        <h2>Explore Our Delicious Food</h2>
+        <p>Find your favourite dishes and enjoy every bite.</p>
       </div>
-      <div class="menu-tools">
-        <div class="filters" id="filters">
-          <button class="filter active" data-category="all">All items</button>
-          <button class="filter" data-category="coffee">Coffee</button>
-          <button class="filter" data-category="food">Food</button>
-          <button class="filter" data-category="dessert">Desserts</button>
-          <button class="filter" data-category="drinks">Drinks</button>
+
+      <!-- SEARCH -->
+      <div class="menu-search">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search your favourite food..."
+        >
+      </div>
+
+      <!-- CATEGORY FILTERS -->
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-category="all" type="button">All</button>
+        <button class="filter-btn" data-category="pizza" type="button">Pizza</button>
+        <button class="filter-btn" data-category="burger" type="button">Burger</button>
+        <button class="filter-btn" data-category="pasta" type="button">Pasta</button>
+        <button class="filter-btn" data-category="drinks" type="button">Drinks</button>
+        <button class="filter-btn" data-category="dessert" type="button">Desserts</button>
+      </div>
+
+      <!-- MENU ITEMS ARE LOADED FROM MONGODB API -->
+      <div class="menu-grid" id="menuGrid">
+        <p>Loading delicious food...</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- STORY SECTION -->
+  <section class="story-section" id="story">
+    <div class="container story-content">
+
+      <div class="story-image">
+        <img
+          src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=900"
+          alt="Foodie Cafe interior"
+        >
+      </div>
+
+      <div class="story-text">
+        <p class="section-label">OUR STORY</p>
+        <h2>Good Food Brings People Together</h2>
+
+        <p>
+          At Foodie Cafe, we believe that great food creates
+          unforgettable memories. Our goal is to serve delicious
+          meals made with fresh ingredients and lots of love.
+        </p>
+
+        <p>
+          Whether you are spending time with friends or enjoying
+          a meal alone, we want every visit to feel special.
+        </p>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- QUOTE SECTION -->
+  <section class="quote-section">
+    <div class="container">
+      <h2>Good Food. Good Mood. Great Memories.</h2>
+      <p>Made with love, served with happiness.</p>
+    </div>
+  </section>
+
+
+  <!-- VISIT SECTION -->
+  <section class="visit-section" id="visit">
+    <div class="container">
+
+      <div class="section-heading">
+        <p class="section-label">VISIT US</p>
+        <h2>We Would Love To See You</h2>
+        <p>Come and enjoy your favourite food at Foodie Cafe.</p>
+      </div>
+
+      <div class="visit-info">
+        <div>
+          <h3>Opening Hours</h3>
+          <p>Monday - Sunday</p>
+          <p>10:00 AM - 10:00 PM</p>
         </div>
-        <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Find your craving..." aria-label="Search menu"></label>
+
+        <div>
+          <h3>Contact</h3>
+          <p>Visit Foodie Cafe for a delicious experience.</p>
+        </div>
       </div>
-      <div class="menu-grid" id="menuGrid"></div>
-      <p class="menu-footnote">Menu prices are sample prices for this demo and can be edited in <code>script.js</code>.</p>
-    </section>
 
-    <section class="story-section" id="story">
-      <div class="story-image"><img src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1100&q=85" alt="Barista preparing a cup of coffee"><span>EST. WITH<br>PASSION ♡</span></div>
-      <div class="story-copy"><p class="eyebrow">MORE THAN JUST A CAFE</p><h2>Where every<br>moment feels<br><em>a little warmer.</em></h2><p>We believe the best memories happen around a table. Foodie Cafe brings together comforting flavours, freshly made favourites and a welcoming space to pause, connect and enjoy.</p><a class="button button-dark" href="#visit">Come say hello <span>↗</span></a></div>
-    </section>
+    </div>
+  </section>
 
-    <section class="quote-section"><span>“</span><p>Good food is the<br>beginning of a good day.</p><small>THE FOODIE CAFE WAY</small></section>
 
-    <section class="visit-section section-pad" id="visit">
-      <div><p class="eyebrow">COME ON IN</p><h2>Your table<br>is <em>waiting.</em></h2><p class="visit-intro">Drop by for your daily coffee, bring your favourite people, or simply stay a little longer.</p>
-        <div class="visit-details"><div><span>⌖</span><p><strong>Find us</strong><small>Your cafe address, City, India</small></p></div><div><span>◷</span><p><strong>Opening hours</strong><small>Every day · 9:00 AM – 10:00 PM</small></p></div><div><span>☎</span><p><strong>Say hello</strong><small>+91 98765 43210</small></p></div></div>
-      </div>
-      <div class="visit-card"><div class="map-art"><span>FOODIE<br>CAFE</span><i>✦</i><b>⌖</b></div><h3>Let's make it a coffee date.</h3><p>Good coffee. Great company. No rush.</p><a class="button button-primary" href="https://www.google.com/maps" target="_blank" rel="noreferrer">Get directions ↗</a></div>
-    </section>
-  </main>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <h2>Foodie Cafe</h2>
+      <p>Fresh Taste. Happy Moments.</p>
+      <p>© <span id="year"></span> Foodie Cafe. All rights reserved.</p>
+    </div>
+  </footer>
 
-  <footer><a class="brand footer-brand" href="#home"><span class="brand-mark">f.</span><span>foodie<span class="brand-light">cafe</span><small>GOOD FOOD. GOOD MOOD.</small></span></a><p>Made for moments worth savouring. © <span id="year"></span> Foodie Cafe.</p><a href="#home">Back to top ↑</a></footer>
 
+  <!-- CART OVERLAY -->
   <div class="cart-overlay" id="cartOverlay"></div>
-  <aside class="cart-drawer" id="cartDrawer" aria-label="Your order" aria-hidden="true">
-    <div class="cart-head"><div><p class="eyebrow">YOUR LITTLE FEAST</p><h2>Your order</h2></div><button id="cartClose" aria-label="Close cart">×</button></div>
-    <div id="cartItems" class="cart-items"><p class="empty-cart">Your basket is waiting for something delicious.</p></div>
-    <div class="cart-bottom"><div><span>Subtotal</span><strong id="cartTotal">₹0</strong></div><button class="button button-primary checkout" id="checkout">Place demo order <span>→</span></button><small>This is a frontend demo. No payment will be collected.</small></div>
+
+
+  <!-- CART DRAWER -->
+  <aside class="cart-drawer" id="cartDrawer">
+
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button id="cartClose" type="button" aria-label="Close cart">✕</button>
+    </div>
+
+    <div class="cart-items" id="cartItems">
+      <p>Your cart is empty.</p>
+    </div>
+
+    <div class="cart-footer">
+      <h3>Total: <span id="cartTotal">₹0</span></h3>
+      <button id="checkout" type="button" class="primary-button">
+        Proceed to Checkout
+      </button>
+    </div>
+
   </aside>
-  <div class="toast" id="toast" role="status"></div>
+
+
+  <!-- LOGIN / SIGNUP MODAL -->
+  <div class="auth-overlay" id="authOverlay">
+
+    <div class="auth-modal">
+
+      <button class="auth-close" id="authClose" type="button" aria-label="Close">
+        ✕
+      </button>
+
+      <div class="auth-brand">
+        <h2>Foodie Cafe</h2>
+        <p id="authSubtitle">Welcome back! Please login to your account.</p>
+      </div>
+
+      <h2 id="authTitle">Login</h2>
+
+      <p id="authMessage" class="auth-message"></p>
+
+
+      <!-- LOGIN FORM -->
+      <form id="loginForm" class="auth-form">
+
+        <label for="loginEmail">Email Address</label>
+        <input
+          type="email"
+          id="loginEmail"
+          placeholder="Enter your email"
+          required
+        >
+
+        <label for="loginPassword">Password</label>
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="Enter your password"
+          required
+        >
+
+        <button type="submit" class="primary-button">
+          Login
+        </button>
+
+        <p>
+          Don't have an account?
+          <button type="button" id="showSignup">Sign Up</button>
+        </p>
+
+      </form>
+
+
+      <!-- SIGNUP FORM -->
+      <form id="signupForm" class="auth-form" style="display:none;">
+
+        <label for="signupName">Full Name</label>
+        <input
+          type="text"
+          id="signupName"
+          placeholder="Enter your full name"
+          required
+        >
+
+        <label for="signupEmail">Email Address</label>
+        <input
+          type="email"
+          id="signupEmail"
+          placeholder="Enter your email"
+          required
+        >
+
+        <label for="signupPassword">Password</label>
+        <input
+          type="password"
+          id="signupPassword"
+          placeholder="Create a password (minimum 8 characters)"
+          minlength="8"
+          required
+        >
+
+        <button type="submit" class="primary-button">
+          Create Account
+        </button>
+
+        <p>
+          Already have an account?
+          <button type="button" id="showLogin">Login</button>
+        </p>
+
+      </form>
+
+
+      <!-- PROFILE PANEL -->
+      <div id="profilePanel" style="display:none;">
+
+        <h3>My Profile</h3>
+
+        <p>Name: <span id="profileName"></span></p>
+        <p>Email: <span id="profileEmail"></span></p>
+
+        <button
+          type="button"
+          id="profileLogout"
+          class="primary-button"
+        >
+          Logout
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- TOAST MESSAGE -->
+  <div class="toast" id="toast"></div>
+
+
+  <!-- JAVASCRIPT -->
   <script src="script.js"></script>
+
 </body>
 </html>
