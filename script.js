@@ -7,20 +7,12 @@ const API_URL = "https://foodie-cafe-backend-1.onrender.com/api/menu";
 const ORDER_API = "https://foodie-cafe-backend-1.onrender.com/api/orders";
 const AUTH_API = "https://foodie-cafe-backend-1.onrender.com/api/auth";
 
-// ==========================================
-// GLOBAL VARIABLES
-// ==========================================
-
 let menuItems = [];
 let cart = [];
 let activeCategory = "all";
 
 let token = localStorage.getItem("foodieToken") || "";
 let currentUser = JSON.parse(localStorage.getItem("foodieUser") || "null");
-
-// ==========================================
-// HTML ELEMENTS
-// ==========================================
 
 const menuGrid = document.getElementById("menuGrid");
 const menuSearch = document.getElementById("menuSearch");
@@ -36,6 +28,46 @@ const signupForm = document.getElementById("signupForm");
 
 const rupees = amount =>
   "₹" + Number(amount).toLocaleString("en-IN");
+
+// ==========================================
+// IMAGE FALLBACKS
+// ==========================================
+
+function getFallbackImage(category) {
+  const images = {
+    coffee:
+      "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=700&q=80",
+
+    drinks:
+      "https://images.unsplash.com/photo-1505252585461-04db1eb84625?auto=format&fit=crop&w=700&q=80",
+
+    pizza:
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=700&q=80",
+
+    burger:
+      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=700&q=80",
+
+    pasta:
+      "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=700&q=80",
+
+    dessert:
+      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=700&q=80",
+
+    food:
+      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=700&q=80"
+  };
+
+  return images[category] || images.food;
+}
+
+function handleImageError(image, category) {
+  image.onerror = null;
+  image.src = getFallbackImage(category);
+}
+
+// ==========================================
+// TOAST MESSAGE
+// ==========================================
 
 function showToast(message) {
   const toast = document.getElementById("toast");
@@ -56,7 +88,21 @@ function showToast(message) {
 }
 
 // ==========================================
-// LOAD MENU FROM BACKEND
+// SAFE HTML
+// ==========================================
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[character]);
+}
+
+// ==========================================
+// LOAD MENU
 // ==========================================
 
 async function loadMenu() {
@@ -70,7 +116,9 @@ async function loadMenu() {
       throw new Error(result.message || "Unable to load menu.");
     }
 
-    menuItems = result.data.filter(item => item.available !== false);
+    menuItems = result.data.filter(item =>
+      item.available !== false
+    );
 
     displayMenu();
 
@@ -78,7 +126,7 @@ async function loadMenu() {
     console.error("Menu error:", error);
 
     menuGrid.innerHTML =
-      "<p>Unable to load menu. Please refresh the page.</p>";
+      "<p>Unable to load menu. Please refresh the website.</p>";
   }
 }
 
@@ -89,7 +137,7 @@ async function loadMenu() {
 function displayMenu() {
   const searchText = menuSearch.value.toLowerCase().trim();
 
-  let filteredItems = menuItems.filter(item => {
+  const filteredItems = menuItems.filter(item => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchText) ||
       item.category.toLowerCase().includes(searchText);
@@ -116,10 +164,10 @@ function displayMenu() {
     <div class="menu-card">
 
       <img
-        src="${escapeHTML(item.image || "")}"
+        src="${escapeHTML(item.image || getFallbackImage(item.category))}"
         alt="${escapeHTML(item.name)}"
         loading="lazy"
-        onerror="this.src='https://placehold.co/600x400?text=Foodie+Cafe'">
+        onerror="handleImageError(this, '${escapeHTML(item.category)}')">
 
       <div class="menu-card-content">
 
@@ -147,25 +195,15 @@ function displayMenu() {
   `).join("");
 }
 
-// Prevent HTML injection from database text.
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[character]);
-}
-
 // ==========================================
-// MENU SEARCH AND FILTERS
+// SEARCH AND FILTER
 // ==========================================
 
 menuSearch.addEventListener("input", displayMenu);
 
 document.querySelectorAll(".filter-btn").forEach(button => {
   button.addEventListener("click", () => {
+
     document.querySelectorAll(".filter-btn").forEach(btn => {
       btn.classList.remove("active");
     });
@@ -179,7 +217,7 @@ document.querySelectorAll(".filter-btn").forEach(button => {
 });
 
 // ==========================================
-// ADD ITEMS TO CART
+// ADD TO CART
 // ==========================================
 
 menuGrid.addEventListener("click", event => {
@@ -224,13 +262,11 @@ menuGrid.addEventListener("click", event => {
 
 function renderCart() {
   const totalQuantity = cart.reduce(
-    (sum, item) => sum + item.quantity,
-    0
+    (sum, item) => sum + item.quantity, 0
   );
 
   const totalAmount = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
+    (sum, item) => sum + item.price * item.quantity, 0
   );
 
   cartCount.textContent = totalQuantity;
@@ -252,15 +288,11 @@ function renderCart() {
 
       <div class="cart-item-controls">
 
-        <button data-action="decrease" data-id="${item.id}">
-          −
-        </button>
+        <button data-action="decrease" data-id="${item.id}">−</button>
 
         <span>${item.quantity}</span>
 
-        <button data-action="increase" data-id="${item.id}">
-          +
-        </button>
+        <button data-action="increase" data-id="${item.id}">+</button>
 
         <button data-action="remove" data-id="${item.id}">
           Remove
@@ -272,7 +304,7 @@ function renderCart() {
 }
 
 // ==========================================
-// CART QUANTITY CONTROLS
+// CART CONTROLS
 // ==========================================
 
 cartItemsElement.addEventListener("click", event => {
@@ -331,7 +363,7 @@ cartOverlay.addEventListener("click", event => {
 });
 
 // ==========================================
-// PLACE ORDER - BACKEND CONNECTION
+// PLACE ORDER
 // ==========================================
 
 document.getElementById("checkoutButton").addEventListener(
@@ -346,15 +378,13 @@ async function placeOrder() {
   }
 
   if (!currentUser) {
-    showToast("Please login before placing an order.");
+    showToast("Please login before ordering.");
     openAuth("login");
     return;
   }
 
-  const customerName = currentUser.name;
-
   const mobile = prompt(
-    "Enter your 10-digit mobile number for order delivery:"
+    "Enter your 10-digit mobile number:"
   );
 
   if (mobile === null) return;
@@ -362,12 +392,11 @@ async function placeOrder() {
   const cleanMobile = mobile.replace(/\D/g, "");
 
   if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
-    showToast("Please enter a valid 10-digit mobile number.");
+    showToast("Enter a valid 10-digit mobile number.");
     return;
   }
 
   const orderButton = document.getElementById("checkoutButton");
-
   const originalText = orderButton.textContent;
 
   try {
@@ -375,7 +404,7 @@ async function placeOrder() {
     orderButton.textContent = "Submitting Order...";
 
     const orderData = {
-      customerName: customerName,
+      customerName: currentUser.name,
       mobile: cleanMobile,
 
       items: cart.map(item => ({
@@ -384,15 +413,13 @@ async function placeOrder() {
       }))
     };
 
-    console.log("Submitting order:", orderData);
+    console.log("Sending order:", orderData);
 
     const response = await fetch(ORDER_API, {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json"
       },
-
       body: JSON.stringify(orderData)
     });
 
@@ -411,23 +438,18 @@ async function placeOrder() {
 
     cartOverlay.classList.remove("active");
 
-    showToast("Your order has been placed successfully!");
-
     alert(
       "Thank you for ordering from Foodie Cafe!\n\n" +
       "Your order has been submitted successfully."
     );
 
+    showToast("Order placed successfully!");
+
   } catch (error) {
-    console.error("Order submission error:", error);
+    console.error("Order error:", error);
 
-    showToast("Order failed: " + error.message);
-
-    alert(
-      "Your order could not be submitted.\n\n" +
-      error.message +
-      "\n\nPlease try again."
-    );
+    alert("Order failed: " + error.message);
+    showToast("Order submission failed.");
 
   } finally {
     orderButton.disabled = false;
@@ -469,7 +491,7 @@ function updateAuthUI() {
 }
 
 // ==========================================
-// OPEN LOGIN / SIGNUP
+// LOGIN AND SIGNUP MODAL
 // ==========================================
 
 function openAuth(mode) {
@@ -483,6 +505,7 @@ function showAuthMode(mode) {
 
   loginForm.hidden = isSignup || isProfile;
   signupForm.hidden = !isSignup;
+
   document.getElementById("profilePanel").hidden = !isProfile;
 
   document.getElementById("authTitle").textContent =
@@ -529,7 +552,7 @@ authOverlay.addEventListener("click", event => {
 });
 
 // ==========================================
-// CUSTOMER SIGNUP
+// SIGNUP
 // ==========================================
 
 signupForm.addEventListener("submit", async event => {
@@ -542,16 +565,10 @@ signupForm.addEventListener("submit", async event => {
   try {
     const response = await fetch(AUTH_API + "/register", {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json"
       },
-
-      body: JSON.stringify({
-        name,
-        email,
-        password
-      })
+      body: JSON.stringify({ name, email, password })
     });
 
     const result = await response.json();
@@ -576,7 +593,7 @@ signupForm.addEventListener("submit", async event => {
 });
 
 // ==========================================
-// CUSTOMER LOGIN
+// LOGIN
 // ==========================================
 
 loginForm.addEventListener("submit", async event => {
@@ -588,15 +605,10 @@ loginForm.addEventListener("submit", async event => {
   try {
     const response = await fetch(AUTH_API + "/login", {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json"
       },
-
-      body: JSON.stringify({
-        email,
-        password
-      })
+      body: JSON.stringify({ email, password })
     });
 
     const result = await response.json();
@@ -643,7 +655,7 @@ document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("profileLogout").addEventListener("click", logout);
 
 // ==========================================
-// CHECK EXISTING LOGIN
+// CHECK LOGIN SESSION
 // ==========================================
 
 async function checkLogin() {
@@ -670,7 +682,7 @@ async function checkLogin() {
     localStorage.setItem("foodieUser", JSON.stringify(currentUser));
 
   } catch (error) {
-    console.log("Login session:", error.message);
+    console.log("Session:", error.message);
 
     token = "";
     currentUser = null;
