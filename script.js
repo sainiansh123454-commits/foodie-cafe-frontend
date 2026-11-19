@@ -1,57 +1,48 @@
 
-
 const API_URL = "https://foodie-cafe-backend-1.onrender.com/api/menu";
+const ORDER_API = "https://foodie-cafe-backend-1.onrender.com/api/orders";
 
 let menuItems = [];
 let cart = [];
 let activeCategory = "all";
 
 const grid = document.getElementById("menuGrid");
-const rupees = n => "₹" + Number(n).toLocaleString("en-IN");
 
-// Load menu items from the backend
+const rupees = amount =>
+  "₹" + Number(amount).toLocaleString("en-IN");
+
+// LOAD MENU FROM BACKEND
 async function loadMenu() {
-  grid.innerHTML = '<p class="empty-cart">Loading menu...</p>';
+  grid.innerHTML = "<p>Loading menu...</p>";
 
   try {
     const response = await fetch(API_URL);
     const result = await response.json();
 
-    if (!response.ok || !result.success || !Array.isArray(result.data)) {
-      throw new Error("Menu could not be loaded");
+    if (!response.ok || !result.success) {
+      throw new Error("Unable to load menu");
     }
 
-    menuItems = result.data.map(item => ({
-      ...item,
-      id: Number(item.id),
-      price: Number(item.price),
-      name: item.name || "Menu item",
-      category: item.category || "food",
-      tag: item.tag || "",
-      desc: item.desc || "",
-      image: item.image || ""
-    }));
-
+    menuItems = result.data;
     renderMenu();
 
   } catch (error) {
-    console.error("Menu loading error:", error);
-    grid.innerHTML =
-      '<p class="empty-cart">Unable to load menu. Please refresh the page.</p>';
+    console.error(error);
+    grid.innerHTML = "<p>Menu could not load. Please refresh.</p>";
   }
 }
 
-// Display menu items
+// DISPLAY MENU
 function renderMenu() {
-  const query = document.getElementById("searchInput").value
-    .trim()
-    .toLowerCase();
+  const query = document.getElementById("searchInput")
+    .value.trim().toLowerCase();
 
   const filtered = menuItems.filter(item =>
-    (activeCategory === "all" || item.category === activeCategory) &&
+    (activeCategory === "all" ||
+      item.category === activeCategory) &&
     (
       item.name.toLowerCase().includes(query) ||
-      item.desc.toLowerCase().includes(query)
+      (item.desc || "").toLowerCase().includes(query)
     )
   );
 
@@ -65,38 +56,79 @@ function renderMenu() {
             loading="lazy"
             onerror="this.style.display='none'"
           >
-          <span class="food-tag">${item.tag}</span>
+          <span class="food-tag">${item.tag || ""}</span>
         </div>
 
         <div class="menu-info">
           <h3>${item.name}</h3>
-          <p>${item.desc}</p>
-
+          <p>${item.desc || ""}</p>
           <div class="menu-meta">
             <strong>${rupees(item.price)}</strong>
-            <button
-              class="add-button"
-              data-add="${item.id}"
-              aria-label="Add ${item.name} to order"
-            >+</button>
+            <button class="add-button" data-add="${item.id}">+</button>
           </div>
         </div>
       </article>
     `).join("")
-    : '<p class="empty-cart">No items found. Try another search.</p>';
+    : "<p>No menu items found.</p>";
 }
 
-// Update shopping cart
+// ADD TO CART
+grid.addEventListener("click", event => {
+  const button = event.target.closest("[data-add]");
+  if (!button) return;
+
+  const item = menuItems.find(
+    x => Number(x.id) === Number(button.dataset.add)
+  );
+
+  if (!item) return;
+
+  const existing = cart.find(x => x.id === item.id);
+
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({
+      ...item,
+      qty: 1
+    });
+  }
+
+  updateCart();
+  toast(item.name + " added to cart");
+});
+
+// CATEGORY FILTER
+document.getElementById("filters").addEventListener("click", event => {
+  const button = event.target.closest("[data-category]");
+  if (!button) return;
+
+  activeCategory = button.dataset.category;
+
+  document.querySelectorAll(".filter").forEach(btn => {
+    btn.classList.toggle("active", btn === button);
+  });
+
+  renderMenu();
+});
+
+// SEARCH
+document.getElementById("searchInput")
+  .addEventListener("input", renderMenu);
+
+// UPDATE CART
 function updateCart() {
   document.getElementById("cartCount").textContent =
     cart.reduce((sum, item) => sum + item.qty, 0);
 
   document.getElementById("cartTotal").textContent =
-    rupees(cart.reduce((sum, item) => sum + item.price * item.qty, 0));
+    rupees(cart.reduce(
+      (sum, item) => sum + item.price * item.qty, 0
+    ));
 
-  const box = document.getElementById("cartItems");
+  const cartBox = document.getElementById("cartItems");
 
-  box.innerHTML = cart.length
+  cartBox.innerHTML = cart.length
     ? cart.map(item => `
       <div class="cart-row">
         <div>
@@ -105,88 +137,27 @@ function updateCart() {
         </div>
 
         <div class="quantity">
-          <button
-            data-change="${item.id}"
-            data-delta="-1"
-            aria-label="Remove one"
-          >−</button>
-
+          <button data-change="${item.id}" data-delta="-1">−</button>
           <span>${item.qty}</span>
-
-          <button
-            data-change="${item.id}"
-            data-delta="1"
-            aria-label="Add one"
-          >+</button>
+          <button data-change="${item.id}" data-delta="1">+</button>
         </div>
       </div>
     `).join("")
-    : '<p class="empty-cart">Your basket is waiting for something delicious.</p>';
+    : "<p class='empty-cart'>Your basket is empty.</p>";
 }
 
-// Show notification
-function toast(message) {
-  const el = document.getElementById("toast");
-  el.textContent = message;
-  el.classList.add("show");
-
-  setTimeout(() => {
-    el.classList.remove("show");
-  }, 1900);
-}
-
-// Add items to cart
-grid.addEventListener("click", event => {
-  const btn = event.target.closest("[data-add]");
-  if (!btn) return;
-
-  const item = menuItems.find(
-    x => x.id === Number(btn.dataset.add)
-  );
-
-  if (!item) return;
-
-  const found = cart.find(x => x.id === item.id);
-
-  if (found) {
-    found.qty++;
-  } else {
-    cart.push({ ...item, qty: 1 });
-  }
-
-  updateCart();
-  toast(item.name + " added to your order");
-});
-
-// Menu category filters
-document.getElementById("filters").addEventListener("click", event => {
-  const btn = event.target.closest("[data-category]");
-  if (!btn) return;
-
-  activeCategory = btn.dataset.category;
-
-  document.querySelectorAll(".filter").forEach(button => {
-    button.classList.toggle("active", button === btn);
-  });
-
-  renderMenu();
-});
-
-// Menu search
-document.getElementById("searchInput").addEventListener("input", renderMenu);
-
-// Increase or decrease cart quantity
+// CART QUANTITY
 document.getElementById("cartItems").addEventListener("click", event => {
-  const btn = event.target.closest("[data-change]");
-  if (!btn) return;
+  const button = event.target.closest("[data-change]");
+  if (!button) return;
 
   const item = cart.find(
-    x => x.id === Number(btn.dataset.change)
+    x => x.id === Number(button.dataset.change)
   );
 
   if (!item) return;
 
-  item.qty += Number(btn.dataset.delta);
+  item.qty += Number(button.dataset.delta);
 
   if (item.qty <= 0) {
     cart = cart.filter(x => x.id !== item.id);
@@ -195,7 +166,16 @@ document.getElementById("cartItems").addEventListener("click", event => {
   updateCart();
 });
 
-// Cart drawer
+// TOAST MESSAGE
+function toast(message) {
+  const el = document.getElementById("toast");
+  el.textContent = message;
+  el.classList.add("show");
+
+  setTimeout(() => el.classList.remove("show"), 1900);
+}
+
+// OPEN AND CLOSE CART
 const drawer = document.getElementById("cartDrawer");
 const overlay = document.getElementById("cartOverlay");
 
@@ -215,28 +195,76 @@ document.getElementById("cartOpen").addEventListener("click", openCart);
 document.getElementById("cartClose").addEventListener("click", closeCart);
 overlay.addEventListener("click", closeCart);
 
-// Demo checkout
-document.getElementById("checkout").addEventListener("click", () => {
+// REAL CHECKOUT - SAVE ORDER IN MONGODB
+document.getElementById("checkout").addEventListener("click", async () => {
   if (!cart.length) {
-    toast("Add something tasty first!");
+    toast("Please add items to your cart.");
     return;
   }
 
-  toast("Demo order received — thank you!");
-  cart = [];
-  updateCart();
-  closeCart();
+  const customerName = prompt("Enter your full name:");
+
+  if (customerName === null || !customerName.trim()) {
+    toast("Please enter your name.");
+    return;
+  }
+
+  const mobile = prompt("Enter your 10-digit mobile number:");
+
+  if (mobile === null || !/^[0-9]{10}$/.test(mobile.trim())) {
+    toast("Please enter a valid 10-digit mobile number.");
+    return;
+  }
+
+  const orderData = {
+    customerName: customerName.trim(),
+    mobile: mobile.trim(),
+    items: cart.map(item => ({
+      id: item.id,
+      quantity: item.qty
+    }))
+  };
+
+  const checkoutButton = document.getElementById("checkout");
+  checkoutButton.disabled = true;
+
+  try {
+    const response = await fetch(ORDER_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Order failed");
+    }
+
+    toast("Your order has been saved successfully!");
+
+    cart = [];
+    updateCart();
+    closeCart();
+
+  } catch (error) {
+    console.error("Checkout error:", error);
+    toast(error.message || "Unable to place order.");
+  } finally {
+    checkoutButton.disabled = false;
+  }
 });
 
-// Mobile navigation
+// MOBILE NAVIGATION
 const toggle = document.getElementById("menuToggle");
 const nav = document.getElementById("nav");
 
 toggle.addEventListener("click", () => {
-  const open = nav.classList.toggle("open");
-
-  toggle.setAttribute("aria-expanded", String(open));
-  toggle.textContent = open ? "×" : "☰";
+  const isOpen = nav.classList.toggle("open");
+  toggle.setAttribute("aria-expanded", String(isOpen));
+  toggle.textContent = isOpen ? "×" : "☰";
 });
 
 nav.querySelectorAll("a").forEach(link => {
@@ -247,9 +275,10 @@ nav.querySelectorAll("a").forEach(link => {
   });
 });
 
-// Start website
+// WEBSITE YEAR
 document.getElementById("year").textContent =
   new Date().getFullYear();
 
+// START WEBSITE
 updateCart();
 loadMenu();
