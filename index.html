@@ -4,240 +4,152 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Foodie Cafe - Fresh food, delicious taste and happy moments.">
-  <title>Foodie Cafe | Fresh Taste, Happy Moments</title>
-
+  <title>Foodie Cafe | Fresh Food, Happy Mood</title>
+  <meta name="description" content="Order delicious pizza, pasta, burgers and more from Foodie Cafe, Kheri Karmu, Shamli.">
   <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
-
 <body>
 
-  <!-- NAVIGATION -->
-  <header class="header">
-    <div class="container nav-container">
+<header class="header">
+  <div class="container nav-container">
+    <a href="#" class="logo">🍔 Foodie Cafe</a>
 
-      <a href="#home" class="logo">
-        <span>Foodie</span> Cafe
-      </a>
+    <button class="menu-toggle" id="menuToggle">☰</button>
 
-      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">
-        ☰
+    <nav class="nav" id="nav">
+      <a href="#home">Home</a>
+      <a href="#menu">Menu</a>
+      <a href="#story">About</a>
+      <a href="#visit">Contact</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="auth-nav-button" id="loginBtn">Login</button>
+      <button class="auth-nav-button signup-nav-button" id="signupBtn">Sign Up</button>
+      <button class="auth-nav-button" id="profileBtn" hidden>My Profile</button>
+      <button class="auth-nav-button" id="logoutBtn" hidden>Logout</button>
+      <button class="cart-button" id="cartButton">
+        🛒 Cart <span id="cartCount">0</span>
       </button>
-
-      <nav class="nav" id="nav">
-        <a href="#home">Home</a>
-        <a href="#menu">Menu</a>
-        <a href="#story">Our Story</a>
-        <a href="#visit">Visit Us</a>
-
-        <button class="auth-nav-button" id="loginBtn" type="button">
-          Login
-        </button>
-
-        <button class="auth-nav-button signup-nav-button" id="signupBtn" type="button">
-          Sign Up
-        </button>
-
-        <button class="auth-nav-button" id="profileBtn" type="button" style="display:none;">
-          Profile
-        </button>
-
-        <button class="auth-nav-button" id="logoutBtn" type="button" style="display:none;">
-          Logout
-        </button>
-
-        <button class="cart-button" id="cartOpen" type="button">
-          🛒 Cart (<span id="cartCount">0</span>)
-        </button>
-      </nav>
-
     </div>
-  </header>
+  </div>
+</header>
 
+<main>
 
-  <!-- HERO SECTION -->
   <section class="hero" id="home">
     <div class="container hero-content">
-
       <div class="hero-text">
-        <p class="section-label">WELCOME TO FOODIE CAFE</p>
-
-        <h1>
-          Fresh Taste.<br>
-          <span>Happy Moments.</span>
-        </h1>
-
-        <p>
-          Enjoy delicious food, freshly prepared with love.
-          Every bite brings a little happiness to your day.
-        </p>
-
-        <a href="#menu" class="primary-button">Explore Our Menu</a>
+        <span class="section-label">WELCOME TO FOODIE CAFE</span>
+        <h1>Good Food.<br>Good Mood.</h1>
+        <p>Enjoy delicious pizza, pasta, burgers and much more.
+           Freshly prepared and served with love.</p>
+        <a href="#menu" class="button">Explore Menu</a>
       </div>
 
       <div class="hero-image">
         <img
-          src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900"
-          alt="Delicious cafe food"
-        >
+          src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=900"
+          alt="Delicious pizza">
       </div>
-
     </div>
   </section>
 
-
-  <!-- FEATURES SECTION -->
   <section class="features">
     <div class="container features-grid">
-
-      <div class="feature">
-        <h3>Fresh Ingredients</h3>
-        <p>Fresh and quality ingredients in every dish.</p>
-      </div>
-
-      <div class="feature">
-        <h3>Made With Love</h3>
-        <p>Every meal is prepared with care and passion.</p>
-      </div>
-
-      <div class="feature">
-        <h3>Great Taste</h3>
-        <p>Delicious flavours for every food lover.</p>
-      </div>
-
+      <div class="feature">🍕<h3>Fresh Food</h3><p>Freshly prepared meals</p></div>
+      <div class="feature">🚚<h3>Easy Ordering</h3><p>Simple online ordering</p></div>
+      <div class="feature">❤️<h3>Made With Love</h3><p>Quality and great taste</p></div>
     </div>
   </section>
 
-
-  <!-- MENU SECTION -->
   <section class="menu-section" id="menu">
     <div class="container">
-
       <div class="section-heading">
-        <p class="section-label">OUR MENU</p>
+        <span class="section-label">OUR MENU</span>
         <h2>Explore Our Delicious Food</h2>
-        <p>Find your favourite dishes and enjoy every bite.</p>
+        <p>Choose your favourites and add them to your cart.</p>
       </div>
 
-      <!-- SEARCH -->
-      <div class="menu-search">
-        <input
-          type="text"
-          id="searchInput"
-          placeholder="Search your favourite food..."
-        >
+      <input
+        type="search"
+        id="menuSearch"
+        class="menu-search"
+        placeholder="Search pizza, burger, pasta...">
+
+      <div class="filters">
+        <button class="filter-btn active" data-category="all">All</button>
+        <button class="filter-btn" data-category="pizza">Pizza</button>
+        <button class="filter-btn" data-category="burger">Burgers</button>
+        <button class="filter-btn" data-category="pasta">Pasta</button>
+        <button class="filter-btn" data-category="drinks">Drinks</button>
       </div>
 
-      <!-- CATEGORY FILTERS -->
-      <div class="filters" id="filters">
-        <button class="filter-btn active" data-category="all" type="button">All</button>
-        <button class="filter-btn" data-category="pizza" type="button">Pizza</button>
-        <button class="filter-btn" data-category="burger" type="button">Burger</button>
-        <button class="filter-btn" data-category="pasta" type="button">Pasta</button>
-        <button class="filter-btn" data-category="drinks" type="button">Drinks</button>
-        <button class="filter-btn" data-category="dessert" type="button">Desserts</button>
-      </div>
-
-      <!-- MENU ITEMS ARE LOADED FROM MONGODB API -->
       <div class="menu-grid" id="menuGrid">
         <p>Loading delicious food...</p>
       </div>
-
     </div>
   </section>
 
-
-  <!-- STORY SECTION -->
   <section class="story-section" id="story">
     <div class="container story-content">
-
       <div class="story-image">
         <img
-          src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=900"
-          alt="Foodie Cafe interior"
-        >
+          src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900"
+          alt="Cafe interior">
       </div>
-
       <div class="story-text">
-        <p class="section-label">OUR STORY</p>
-        <h2>Good Food Brings People Together</h2>
-
-        <p>
-          At Foodie Cafe, we believe that great food creates
-          unforgettable memories. Our goal is to serve delicious
-          meals made with fresh ingredients and lots of love.
-        </p>
-
-        <p>
-          Whether you are spending time with friends or enjoying
-          a meal alone, we want every visit to feel special.
-        </p>
-
+        <span class="section-label">OUR STORY</span>
+        <h2>Food Made With Love</h2>
+        <p>Welcome to Foodie Cafe! We believe good food brings people
+           together. Enjoy tasty food and a memorable experience with us.</p>
       </div>
-
     </div>
   </section>
 
-
-  <!-- QUOTE SECTION -->
   <section class="quote-section">
     <div class="container">
-      <h2>Good Food. Good Mood. Great Memories.</h2>
-      <p>Made with love, served with happiness.</p>
+      <h2>Good Food Is Always A Good Idea!</h2>
+      <p>Fresh flavours, happy moments.</p>
     </div>
   </section>
 
-
-  <!-- VISIT SECTION -->
   <section class="visit-section" id="visit">
     <div class="container">
-
-      <div class="section-heading">
-        <p class="section-label">VISIT US</p>
-        <h2>We Would Love To See You</h2>
-        <p>Come and enjoy your favourite food at Foodie Cafe.</p>
-      </div>
-
       <div class="visit-info">
-        <div>
-          <h3>Opening Hours</h3>
-          <p>Monday - Sunday</p>
-          <p>10:00 AM - 10:00 PM</p>
-        </div>
-
-        <div>
-          <h3>Contact</h3>
-          <p>Visit Foodie Cafe for a delicious experience.</p>
-        </div>
+        <span class="section-label">FIND US</span>
+        <h2>Visit Foodie Cafe</h2>
+        <p>📍 Kheri Karmu, Shamli, Uttar Pradesh, India</p>
+        <p>📞 <a href="tel:7668337681">7668337681</a></p>
+        <p>✉️ <a href="mailto:foodiecafe123454@gmail.com">foodiecafe123454@gmail.com</a></p>
+        <a
+          class="button"
+          href="https://www.google.com/maps/search/?api=1&query=Kheri+Karmu+Shamli"
+          target="_blank"
+          rel="noopener">Get Directions</a>
       </div>
-
     </div>
   </section>
 
+</main>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="container">
-      <h2>Foodie Cafe</h2>
-      <p>Fresh Taste. Happy Moments.</p>
-      <p>© <span id="year"></span> Foodie Cafe. All rights reserved.</p>
-    </div>
-  </footer>
+<footer class="footer">
+  <div class="container">
+    <h2>🍔 Foodie Cafe</h2>
+    <p>Fresh Food. Happy Mood.</p>
+    <p>Kheri Karmu, Shamli, Uttar Pradesh</p>
+    <p>Phone: 7668337681</p>
+    <p>Email: foodiecafe123454@gmail.com</p>
+    <p>© <span id="year"></span> Foodie Cafe. All rights reserved.</p>
+  </div>
+</footer>
 
-
-  <!-- CART OVERLAY -->
-  <div class="cart-overlay" id="cartOverlay"></div>
-
-
-  <!-- CART DRAWER -->
-  <aside class="cart-drawer" id="cartDrawer">
-
+<!-- CART -->
+<div class="cart-overlay" id="cartOverlay">
+  <div class="cart-drawer">
     <div class="cart-header">
       <h2>Your Cart</h2>
-      <button id="cartClose" type="button" aria-label="Close cart">✕</button>
+      <button id="closeCart">✕</button>
     </div>
 
     <div class="cart-items" id="cartItems">
@@ -246,133 +158,50 @@
 
     <div class="cart-footer">
       <h3>Total: <span id="cartTotal">₹0</span></h3>
-      <button id="checkout" type="button" class="primary-button">
-        Proceed to Checkout
-      </button>
+      <button class="button" id="checkoutButton">Place Order</button>
     </div>
-
-  </aside>
-
-
-  <!-- LOGIN / SIGNUP MODAL -->
-  <div class="auth-overlay" id="authOverlay">
-
-    <div class="auth-modal">
-
-      <button class="auth-close" id="authClose" type="button" aria-label="Close">
-        ✕
-      </button>
-
-      <div class="auth-brand">
-        <h2>Foodie Cafe</h2>
-        <p id="authSubtitle">Welcome back! Please login to your account.</p>
-      </div>
-
-      <h2 id="authTitle">Login</h2>
-
-      <p id="authMessage" class="auth-message"></p>
-
-
-      <!-- LOGIN FORM -->
-      <form id="loginForm" class="auth-form">
-
-        <label for="loginEmail">Email Address</label>
-        <input
-          type="email"
-          id="loginEmail"
-          placeholder="Enter your email"
-          required
-        >
-
-        <label for="loginPassword">Password</label>
-        <input
-          type="password"
-          id="loginPassword"
-          placeholder="Enter your password"
-          required
-        >
-
-        <button type="submit" class="primary-button">
-          Login
-        </button>
-
-        <p>
-          Don't have an account?
-          <button type="button" id="showSignup">Sign Up</button>
-        </p>
-
-      </form>
-
-
-      <!-- SIGNUP FORM -->
-      <form id="signupForm" class="auth-form" style="display:none;">
-
-        <label for="signupName">Full Name</label>
-        <input
-          type="text"
-          id="signupName"
-          placeholder="Enter your full name"
-          required
-        >
-
-        <label for="signupEmail">Email Address</label>
-        <input
-          type="email"
-          id="signupEmail"
-          placeholder="Enter your email"
-          required
-        >
-
-        <label for="signupPassword">Password</label>
-        <input
-          type="password"
-          id="signupPassword"
-          placeholder="Create a password (minimum 8 characters)"
-          minlength="8"
-          required
-        >
-
-        <button type="submit" class="primary-button">
-          Create Account
-        </button>
-
-        <p>
-          Already have an account?
-          <button type="button" id="showLogin">Login</button>
-        </p>
-
-      </form>
-
-
-      <!-- PROFILE PANEL -->
-      <div id="profilePanel" style="display:none;">
-
-        <h3>My Profile</h3>
-
-        <p>Name: <span id="profileName"></span></p>
-        <p>Email: <span id="profileEmail"></span></p>
-
-        <button
-          type="button"
-          id="profileLogout"
-          class="primary-button"
-        >
-          Logout
-        </button>
-
-      </div>
-
-    </div>
-
   </div>
+</div>
 
+<!-- LOGIN / SIGN UP -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-modal">
+    <button class="auth-close" id="authClose">✕</button>
 
-  <!-- TOAST MESSAGE -->
-  <div class="toast" id="toast"></div>
+    <div class="auth-brand">
+      <h2>🍔 Foodie Cafe</h2>
+      <p id="authSubtitle">Welcome back! Please sign in.</p>
+    </div>
 
+    <h2 id="authTitle">Login</h2>
+    <p id="authMessage" class="auth-message"></p>
 
-  <!-- JAVASCRIPT -->
-  <script src="script.js"></script>
+    <form id="loginForm" class="auth-form">
+      <input type="email" id="loginEmail" placeholder="Email address" required>
+      <input type="password" id="loginPassword" placeholder="Password" required minlength="6">
+      <button type="submit" class="button">Login</button>
+      <p>New customer? <button type="button" id="showSignup">Create Account</button></p>
+    </form>
 
+    <form id="signupForm" class="auth-form" hidden>
+      <input type="text" id="signupName" placeholder="Full name" required>
+      <input type="email" id="signupEmail" placeholder="Email address" required>
+      <input type="password" id="signupPassword" placeholder="Create password" required minlength="6">
+      <button type="submit" class="button">Create Account</button>
+      <p>Already registered? <button type="button" id="showLogin">Login</button></p>
+    </form>
+
+    <div id="profilePanel" hidden>
+      <h3>My Profile</h3>
+      <p>Name: <span id="profileName"></span></p>
+      <p>Email: <span id="profileEmail"></span></p>
+      <button class="button" id="profileLogout">Logout</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
 </body>
 </html>
