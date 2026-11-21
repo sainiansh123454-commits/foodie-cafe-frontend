@@ -1,518 +1,536 @@
+// ================= FOODIE CAFE CONFIG =================
+const API_BASE = "https://foodie-cafe-backend.onrender.com/api";
 
-const API_BASE = "https://foodie-cafe-backend-1.onrender.com/api";
-
-const API_URL = `${API_BASE}/menu`;
-const ORDER_API = `${API_BASE}/orders`;
-const AUTH_API = `${API_BASE}/auth`;
-
-// ================= ELEMENTS =================
-
-const menuGrid = document.getElementById("menuGrid");
-const cartItems = document.getElementById("cartItems");
-const cartCount = document.getElementById("cartCount");
-const cartTotal = document.getElementById("cartTotal");
-
-const cartOverlay = document.getElementById("cartOverlay");
-const authOverlay = document.getElementById("authOverlay");
-
+// ================= STATE =================
 let menuItems = [];
 let cart = [];
 let activeCategory = "all";
+let currentUser = null;
 
-let token = localStorage.getItem("foodieToken") || "";
-let currentUser = JSON.parse(localStorage.getItem("foodieUser") || "null");
+const token = () => localStorage.getItem("foodieToken");
 
-const rupees = amount =>
-  "₹" + Number(amount).toLocaleString("en-IN");
+const rupees = (amount) =>
+  "₹" + Number(amount || 0).toLocaleString("en-IN");
 
-// ================= TOAST =================
+const get = (id) => document.getElementById(id);
 
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
+const showToast = (message) => {
+  const toast = get("toast");
 
-  toast.textContent = message;
-  toast.classList.add("show");
+  if (toast) {
+    toast.textContent = message;
+    toast.classList.add("show");
 
-  setTimeout(() => toast.classList.remove("show"), 3000);
+    setTimeout(() => {
+      toast.classList.remove("show");
+    }, 2500);
+  } else {
+    alert(message);
+  }
+};
+
+async function apiRequest(path, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
+
+  if (token()) {
+    headers.Authorization = `Bearer ${token()}`;
+  }
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers
+  });
+
+  let result;
+
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error("The server returned an invalid response.");
+  }
+
+  if (!response.ok || result.success === false) {
+    throw new Error(result.message || "Request failed.");
+  }
+
+  return result;
 }
 
 // ================= MENU =================
-
 async function loadMenu() {
+  const grid = get("menuGrid");
+  if (!grid) return;
+
+  grid.innerHTML = "<p>Loading menu...</p>";
+
   try {
-    menuGrid.innerHTML = "<p>Loading delicious food...</p>";
+    const result = await apiRequest("/menu");
+    menuItems = Array.isArray(result.data) ? result.data : [];
 
-    const response = await fetch(API_URL);
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || "Unable to load menu");
+    if (!menuItems.length) {
+      grid.innerHTML = "<p>No menu items are available right now.</p>";
+      return;
     }
 
-    menuItems = result.data || [];
-    displayMenu();
-
+    renderMenu();
   } catch (error) {
-    console.error("Menu error:", error);
-    menuGrid.innerHTML =
-      "<p>Menu could not load. Please refresh the page.</p>";
+    console.error("Menu loading error:", error);
+    grid.innerHTML = `
+      <p class="menu-error">
+        Could not load menu. Please refresh the page.
+      </p>
+    `;
   }
 }
 
-function displayMenu() {
-  const search = document
-    .getElementById("menuSearch")
-    .value.toLowerCase()
-    .trim();
+function renderMenu() {
+  const grid = get("menuGrid");
+  if (!grid) return;
 
-  const filtered = menuItems.filter(item => {
-    const categoryMatch =
+  const searchInput = get("menuSearch");
+  const searchText = searchInput
+    ? searchInput.value.trim().toLowerCase()
+    : "";
+
+  const filteredItems = menuItems.filter((item) => {
+    const categoryMatches =
       activeCategory === "all" ||
-      item.category.toLowerCase() === activeCategory;
+      String(item.category || "").toLowerCase() === activeCategory;
 
-    const searchMatch =
-      item.name.toLowerCase().includes(search) ||
-      item.category.toLowerCase().includes(search);
+    const searchMatches =
+      !searchText ||
+      `${item.name || ""} ${item.desc || ""} ${item.category || ""}`
+        .toLowerCase()
+        .includes(searchText);
 
-    return categoryMatch && searchMatch && item.available !== false;
+    return categoryMatches && searchMatches && item.available !== false;
   });
 
-  if (!filtered.length) {
-    menuGrid.innerHTML = "<p>No food items found.</p>";
+  if (!filteredItems.length) {
+    grid.innerHTML = "<p>No items found. Try another category or search.</p>";
     return;
   }
 
-  menuGrid.innerHTML = filtered.map(item => `
-    <div class="menu-card">
+  grid.innerHTML = filteredItems.map((item) => `
+    <article class="menu-card">
       <div class="menu-card-image">
         <img
           src="${escapeHTML(item.image || "")}"
-          alt="${escapeHTML(item.name)}"
+          alt="${escapeHTML(item.name || "Menu item")}"
           loading="lazy"
-          onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Foodie+Cafe'">
+          onerror="this.style.display='none'"
+        >
+        ${item.tag ? `<span class="menu-tag">${escapeHTML(item.tag)}</span>` : ""}
       </div>
 
       <div class="menu-card-content">
-        <span class="menu-tag">${escapeHTML(item.tag || "")}</span>
-        <h3>${escapeHTML(item.name)}</h3>
+        <h3>${escapeHTML(item.name || "Menu item")}</h3>
         <p>${escapeHTML(item.desc || "")}</p>
 
         <div class="menu-card-bottom">
           <strong>${rupees(item.price)}</strong>
-          <button class="button" onclick="addToCart(${Number(item.id)})">
-            Add to Cart
+          <button
+            type="button"
+            class="add-to-cart"
+            data-add="${escapeHTML(item.id)}"
+          >
+            Add to cart
           </button>
         </div>
       </div>
-    </div>
+    </article>
   `).join("");
+
+  grid.querySelectorAll("[data-add]").forEach((button) => {
+    button.addEventListener("click", () => {
+      addToCart(button.dataset.add);
+    });
+  });
 }
 
 function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
-document.querySelectorAll(".filter-btn").forEach(button => {
+// ================= CATEGORY AND SEARCH =================
+document.querySelectorAll(".filter-btn").forEach((button) => {
   button.addEventListener("click", () => {
-    document.querySelectorAll(".filter-btn")
-      .forEach(btn => btn.classList.remove("active"));
+    activeCategory = String(button.dataset.category || "all").toLowerCase();
+
+    document.querySelectorAll(".filter-btn").forEach((item) => {
+      item.classList.remove("active");
+    });
 
     button.classList.add("active");
-    activeCategory = button.dataset.category;
-    displayMenu();
+    renderMenu();
   });
 });
 
-document.getElementById("menuSearch")
-  .addEventListener("input", displayMenu);
+if (get("menuSearch")) {
+  get("menuSearch").addEventListener("input", renderMenu);
+}
 
 // ================= CART =================
-
-function addToCart(id) {
-  const item = menuItems.find(food => Number(food.id) === Number(id));
+function addToCart(itemId) {
+  const item = menuItems.find((menuItem) => String(menuItem.id) === String(itemId));
 
   if (!item) {
-    showToast("Food item not found");
+    showToast("Item could not be found.");
     return;
   }
 
-  const existing = cart.find(food => Number(food.id) === Number(id));
+  const existing = cart.find((cartItem) => String(cartItem.id) === String(itemId));
 
   if (existing) {
-    existing.quantity++;
+    existing.quantity += 1;
   } else {
-    cart.push({ ...item, quantity: 1 });
+    cart.push({
+      id: item.id,
+      name: item.name,
+      price: Number(item.price),
+      image: item.image,
+      quantity: 1
+    });
   }
 
-  updateCart();
-  showToast(item.name + " added to cart");
+  renderCart();
+  showToast(`${item.name} added to cart.`);
 }
 
-function changeQuantity(id, amount) {
-  const item = cart.find(food => Number(food.id) === Number(id));
+function changeQuantity(itemId, amount) {
+  const item = cart.find((cartItem) => String(cartItem.id) === String(itemId));
   if (!item) return;
 
   item.quantity += amount;
 
   if (item.quantity <= 0) {
-    cart = cart.filter(food => Number(food.id) !== Number(id));
+    cart = cart.filter((cartItem) => String(cartItem.id) !== String(itemId));
   }
 
-  updateCart();
+  renderCart();
 }
 
-function removeFromCart(id) {
-  cart = cart.filter(food => Number(food.id) !== Number(id));
-  updateCart();
-}
+function renderCart() {
+  const cartItemsElement = get("cartItems");
+  const cartCountElement = get("cartCount");
+  const cartTotalElement = get("cartTotal");
 
-function updateCart() {
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const total = cart.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0
-  );
+  if (cartCountElement) cartCountElement.textContent = count;
+  if (cartTotalElement) cartTotalElement.textContent = rupees(total);
 
-  cartCount.textContent = count;
-  cartTotal.textContent = rupees(total);
+  if (!cartItemsElement) return;
 
   if (!cart.length) {
-    cartItems.innerHTML = "<p>Your cart is empty.</p>";
+    cartItemsElement.innerHTML = "<p>Your cart is empty.</p>";
     return;
   }
 
-  cartItems.innerHTML = cart.map(item => `
+  cartItemsElement.innerHTML = cart.map((item) => `
     <div class="cart-item">
       <div>
-        <h3>${escapeHTML(item.name)}</h3>
+        <strong>${escapeHTML(item.name)}</strong>
         <p>${rupees(item.price)} × ${item.quantity}</p>
       </div>
 
-      <div class="cart-controls">
-        <button onclick="changeQuantity(${Number(item.id)},-1)">−</button>
+      <div class="cart-item-controls">
+        <button type="button" data-minus="${escapeHTML(item.id)}">−</button>
         <span>${item.quantity}</span>
-        <button onclick="changeQuantity(${Number(item.id)},1)">+</button>
-        <button onclick="removeFromCart(${Number(item.id)})">✕</button>
+        <button type="button" data-plus="${escapeHTML(item.id)}">+</button>
       </div>
     </div>
   `).join("");
-}
 
-document.getElementById("cartButton").addEventListener("click", () => {
-  cartOverlay.classList.add("active");
-});
-
-document.getElementById("closeCart").addEventListener("click", () => {
-  cartOverlay.classList.remove("active");
-});
-
-cartOverlay.addEventListener("click", event => {
-  if (event.target === cartOverlay) {
-    cartOverlay.classList.remove("active");
-  }
-});
-
-// ================= AUTH MODAL =================
-
-function openAuth(mode = "login") {
-  authOverlay.classList.add("active");
-  showAuthMode(mode);
-}
-
-function closeAuth() {
-  authOverlay.classList.remove("active");
-}
-
-function showAuthMode(mode) {
-  const loginForm = document.getElementById("loginForm");
-  const signupForm = document.getElementById("signupForm");
-  const profilePanel = document.getElementById("profilePanel");
-
-  loginForm.hidden = mode !== "login";
-  signupForm.hidden = mode !== "signup";
-  profilePanel.hidden = mode !== "profile";
-
-  document.getElementById("authTitle").textContent =
-    mode === "signup" ? "Create Account" :
-    mode === "profile" ? "My Profile" : "Login";
-
-  document.getElementById("authSubtitle").textContent =
-    mode === "signup" ? "Join Foodie Cafe today!" :
-    mode === "profile" ? "Your account details" :
-    "Welcome back! Please sign in.";
-
-  document.getElementById("authMessage").textContent = "";
-
-  if (mode === "profile" && currentUser) {
-    document.getElementById("profileName").textContent = currentUser.name;
-    document.getElementById("profileEmail").textContent = currentUser.email;
-  }
-}
-
-document.getElementById("loginBtn").addEventListener("click", () => {
-  openAuth("login");
-});
-
-document.getElementById("signupBtn").addEventListener("click", () => {
-  openAuth("signup");
-});
-
-document.getElementById("profileBtn").addEventListener("click", () => {
-  openAuth("profile");
-});
-
-document.getElementById("authClose").addEventListener("click", closeAuth);
-
-authOverlay.addEventListener("click", event => {
-  if (event.target === authOverlay) closeAuth();
-});
-
-document.getElementById("showSignup").addEventListener("click", () => {
-  showAuthMode("signup");
-});
-
-document.getElementById("showLogin").addEventListener("click", () => {
-  showAuthMode("login");
-});
-
-// ================= REGISTER =================
-
-document.getElementById("signupForm")
-  .addEventListener("submit", async event => {
-    event.preventDefault();
-
-    const name = document.getElementById("signupName").value.trim();
-    const email = document.getElementById("signupEmail").value.trim();
-    const password = document.getElementById("signupPassword").value;
-
-    try {
-      const response = await fetch(`${AUTH_API}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Registration failed");
-      }
-
-      showToast("Account created successfully!");
-      document.getElementById("signupForm").reset();
-      showAuthMode("login");
-
-    } catch (error) {
-      document.getElementById("authMessage").textContent = error.message;
-    }
+  cartItemsElement.querySelectorAll("[data-minus]").forEach((button) => {
+    button.addEventListener("click", () => {
+      changeQuantity(button.dataset.minus, -1);
+    });
   });
 
-// ================= LOGIN =================
+  cartItemsElement.querySelectorAll("[data-plus]").forEach((button) => {
+    button.addEventListener("click", () => {
+      changeQuantity(button.dataset.plus, 1);
+    });
+  });
+}
 
-document.getElementById("loginForm")
-  .addEventListener("submit", async event => {
+function openCart() {
+  const overlay = get("cartOverlay");
+  if (overlay) overlay.classList.add("active");
+}
+
+function closeCart() {
+  const overlay = get("cartOverlay");
+  if (overlay) overlay.classList.remove("active");
+}
+
+if (get("cartButton")) {
+  get("cartButton").addEventListener("click", openCart);
+}
+
+if (get("cartOverlay")) {
+  get("cartOverlay").addEventListener("click", (event) => {
+    if (event.target === get("cartOverlay")) closeCart();
+  });
+}
+
+// ================= AUTH PANEL =================
+function openAuthPanel() {
+  const overlay = get("authOverlay");
+  if (overlay) overlay.classList.add("active");
+}
+
+function closeAuthPanel() {
+  const overlay = get("authOverlay");
+  if (overlay) overlay.classList.remove("active");
+}
+
+if (get("authClose")) {
+  get("authClose").addEventListener("click", closeAuthPanel);
+}
+
+if (get("authOverlay")) {
+  get("authOverlay").addEventListener("click", (event) => {
+    if (event.target === get("authOverlay")) closeAuthPanel();
+  });
+}
+
+if (get("loginBtn")) {
+  get("loginBtn").addEventListener("click", openAuthPanel);
+}
+
+if (get("signupBtn")) {
+  get("signupBtn").addEventListener("click", openAuthPanel);
+}
+
+function formValue(form, names) {
+  for (const name of names) {
+    const field = form.querySelector(`[name="${name}"]`) ||
+      form.querySelector(`#${name}`);
+
+    if (field && field.value) return field.value.trim();
+  }
+
+  return "";
+}
+
+function setAuthStatus(message) {
+  showToast(message);
+}
+
+if (get("signupForm")) {
+  get("signupForm").addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
+    const form = event.currentTarget;
+    const name = formValue(form, ["name", "fullName", "customerName"]);
+    const email = formValue(form, ["email"]);
+    const mobile = formValue(form, ["mobile", "phone", "phoneNumber"]);
+    const password = formValue(form, ["password"]);
+
+    if (!name || !email || !password) {
+      setAuthStatus("Enter your name, email and password.");
+      return;
+    }
 
     try {
-      const response = await fetch(`${AUTH_API}/login`, {
+      const result = await apiRequest("/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, mobile, password })
+      });
+
+      if (result.token) localStorage.setItem("foodieToken", result.token);
+      if (result.user) localStorage.setItem("foodieUser", JSON.stringify(result.user));
+
+      currentUser = result.user || null;
+      updateAuthUI();
+      form.reset();
+      closeAuthPanel();
+      setAuthStatus("Account created successfully.");
+    } catch (error) {
+      setAuthStatus(error.message);
+    }
+  });
+}
+
+if (get("loginForm")) {
+  get("loginForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const email = formValue(form, ["email"]);
+    const password = formValue(form, ["password"]);
+
+    if (!email || !password) {
+      setAuthStatus("Enter your email and password.");
+      return;
+    }
+
+    try {
+      const result = await apiRequest("/auth/login", {
+        method: "POST",
         body: JSON.stringify({ email, password })
       });
 
-      const result = await response.json();
+      if (result.token) localStorage.setItem("foodieToken", result.token);
+      if (result.user) localStorage.setItem("foodieUser", JSON.stringify(result.user));
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Login failed");
-      }
-
-      token = result.token;
-      currentUser = result.user;
-
-      localStorage.setItem("foodieToken", token);
-      localStorage.setItem("foodieUser", JSON.stringify(currentUser));
-
+      currentUser = result.user || null;
       updateAuthUI();
-      closeAuth();
-      document.getElementById("loginForm").reset();
-
-      showToast("Welcome to Foodie Cafe!");
-
+      form.reset();
+      closeAuthPanel();
+      setAuthStatus("Login successful.");
     } catch (error) {
-      document.getElementById("authMessage").textContent = error.message;
+      setAuthStatus(error.message);
     }
   });
-
-// ================= AUTH STATUS =================
-
-function updateAuthUI() {
-  const loggedIn = Boolean(token && currentUser);
-
-  document.getElementById("loginBtn").hidden = loggedIn;
-  document.getElementById("signupBtn").hidden = loggedIn;
-  document.getElementById("profileBtn").hidden = !loggedIn;
-  document.getElementById("logoutBtn").hidden = !loggedIn;
 }
 
-async function checkLogin() {
-  if (!token) {
+function updateAuthUI() {
+  const profileButton = get("profileBtn");
+  const loginButton = get("loginBtn");
+  const signupButton = get("signupBtn");
+  const logoutButton = get("logoutBtn");
+
+  if (currentUser) {
+    if (profileButton) profileButton.hidden = false;
+    if (loginButton) loginButton.hidden = true;
+    if (signupButton) signupButton.hidden = true;
+    if (logoutButton) logoutButton.hidden = false;
+  } else {
+    if (profileButton) profileButton.hidden = true;
+    if (loginButton) loginButton.hidden = false;
+    if (signupButton) signupButton.hidden = false;
+    if (logoutButton) logoutButton.hidden = true;
+  }
+}
+
+async function loadCurrentUser() {
+  if (!token()) {
+    currentUser = null;
     updateAuthUI();
     return;
   }
 
   try {
-    const response = await fetch(`${AUTH_API}/me`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const result = await apiRequest("/auth/me");
+    currentUser = result.user || result.data || null;
 
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error("Session expired");
+    if (currentUser) {
+      localStorage.setItem("foodieUser", JSON.stringify(currentUser));
     }
 
-    currentUser = result.user;
-    localStorage.setItem("foodieUser", JSON.stringify(currentUser));
-
+    updateAuthUI();
   } catch (error) {
-    logout(false);
+    console.warn("Could not load user profile:", error);
+    localStorage.removeItem("foodieToken");
+    localStorage.removeItem("foodieUser");
+    currentUser = null;
+    updateAuthUI();
   }
-
-  updateAuthUI();
 }
 
-function logout(showMessage = true) {
-  token = "";
-  currentUser = null;
-
-  localStorage.removeItem("foodieToken");
-  localStorage.removeItem("foodieUser");
-
-  updateAuthUI();
-  closeAuth();
-
-  if (showMessage) showToast("You have logged out");
+if (get("logoutBtn")) {
+  get("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem("foodieToken");
+    localStorage.removeItem("foodieUser");
+    currentUser = null;
+    updateAuthUI();
+    showToast("Logged out.");
+  });
 }
 
-document.getElementById("logoutBtn")
-  .addEventListener("click", () => logout());
+if (get("profileBtn")) {
+  get("profileBtn").addEventListener("click", () => {
+    const panel = get("profilePanel");
+    if (!panel) return;
 
-document.getElementById("profileLogout")
-  .addEventListener("click", () => logout());
+    panel.innerHTML = currentUser
+      ? `<p><strong>${escapeHTML(currentUser.name || "Customer")}</strong></p>
+         <p>${escapeHTML(currentUser.email || "")}</p>
+         <p>${escapeHTML(currentUser.mobile || currentUser.phone || "")}</p>`
+      : "<p>Please sign in to view your profile.</p>";
+
+    panel.classList.toggle("active");
+  });
+}
 
 // ================= CHECKOUT =================
-
-document.getElementById("checkoutButton")
-  .addEventListener("click", async () => {
-
+if (get("checkoutButton")) {
+  get("checkoutButton").addEventListener("click", async () => {
     if (!cart.length) {
-      showToast("Your cart is empty");
+      showToast("Your cart is empty.");
       return;
     }
 
-    if (!token || !currentUser) {
-      cartOverlay.classList.remove("active");
-      openAuth("login");
-      showToast("Please login before placing your order");
+    if (!token()) {
+      showToast("Please sign in before placing an order.");
+      openAuthPanel();
       return;
     }
 
-    const mobile = prompt("Enter your 10-digit mobile number:");
+    const mobile = prompt("Enter your contact number:");
+    if (!mobile) return;
 
-    if (mobile === null) return;
+    const address = prompt("Enter your complete delivery address:");
+    if (!address) return;
 
-    if (!/^[6-9]\d{9}$/.test(mobile.trim())) {
-      showToast("Please enter a valid 10-digit mobile number");
-      return;
-    }
+    const customerName =
+      currentUser?.name ||
+      prompt("Enter your name:");
 
-    const address = prompt(
-      "Enter your complete delivery address, including village, area and PIN code:"
-    );
-
-    if (address === null) return;
-
-    if (address.trim().length < 10) {
-      showToast("Please enter your complete delivery address");
-      return;
-    }
+    if (!customerName) return;
 
     const orderData = {
-      customerName: currentUser.name,
-      mobile: mobile.trim(),
-      address: address.trim(),
-      items: cart.map(item => ({
-        id: Number(item.id),
-        quantity: Number(item.quantity)
+      customerName,
+      mobile,
+      address,
+      items: cart.map((item) => ({
+        id: item.id,
+        quantity: item.quantity
       }))
     };
 
-    const checkoutButton = document.getElementById("checkoutButton");
-    checkoutButton.disabled = true;
-    checkoutButton.textContent = "Placing Order...";
-
     try {
-      const response = await fetch(ORDER_API, {
+      const result = await apiRequest("/orders", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
         body: JSON.stringify(orderData)
       });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Order could not be placed");
-      }
-
       cart = [];
-      updateCart();
-
-      cartOverlay.classList.remove("active");
-
-      showToast("Order placed successfully! Thank you.");
-
+      renderCart();
+      closeCart();
+      showToast(result.message || "Order placed successfully.");
     } catch (error) {
       console.error("Order error:", error);
-      showToast(error.message || "Something went wrong");
-    } finally {
-      checkoutButton.disabled = false;
-      checkoutButton.textContent = "Place Order";
+      showToast(error.message || "Could not place your order.");
     }
   });
+}
 
 // ================= MOBILE MENU =================
-
-document.getElementById("menuToggle")
-  .addEventListener("click", () => {
-    document.getElementById("nav").classList.toggle("active");
+if (get("menuToggle") && get("nav")) {
+  get("menuToggle").addEventListener("click", () => {
+    get("nav").classList.toggle("active");
   });
-
-document.querySelectorAll("#nav a").forEach(link => {
-  link.addEventListener("click", () => {
-    document.getElementById("nav").classList.remove("active");
-  });
-});
+}
 
 // ================= FOOTER YEAR =================
+if (get("year")) {
+  get("year").textContent = new Date().getFullYear();
+}
 
-document.getElementById("year").textContent = new Date().getFullYear();
-
-// ================= START WEBSITE =================
-
-updateCart();
-checkLogin();
+// ================= START =================
+renderCart();
 loadMenu();
+loadCurrentUser();
