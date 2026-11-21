@@ -22,6 +22,50 @@ function escapeHTML(value) {
     .replaceAll("'", "&#039;");
 }
 
+// ================= IMAGE HELPERS =================
+
+// A visible fallback image for items whose image URL is missing or broken.
+const FALLBACK_IMAGE =
+  "data:image/svg+xml;charset=UTF-8," +
+  encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="700" height="450" viewBox="0 0 700 450">
+      <rect width="700" height="450" fill="#f2eee8"/>
+      <text x="350" y="205" text-anchor="middle" font-size="74">☕</text>
+      <text x="350" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#6b6258">
+        Foodie Cafe
+      </text>
+    </svg>
+  `);
+
+function getItemImage(item) {
+  const possibleImage =
+    item?.image ||
+    item?.imageUrl ||
+    item?.image_url ||
+    item?.photo ||
+    item?.photoUrl ||
+    "";
+
+  if (typeof possibleImage !== "string") return "";
+  return possibleImage.trim();
+}
+
+function setImageFallback(img) {
+  if (!img) return;
+
+  // Prevent an endless error loop if even the fallback cannot load.
+  if (img.dataset.fallbackApplied === "true") {
+    img.style.display = "none";
+    return;
+  }
+
+  img.dataset.fallbackApplied = "true";
+  img.src = FALLBACK_IMAGE;
+  img.style.display = "block";
+  img.classList.add("image-fallback");
+}
+
+// ================= NOTIFICATIONS =================
 function showToast(message) {
   const toast = get("toast");
 
@@ -38,6 +82,7 @@ function showToast(message) {
   }, 3000);
 }
 
+// ================= API REQUESTS =================
 async function apiRequest(path, options = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -81,7 +126,8 @@ async function loadMenu() {
     renderMenu();
   } catch (error) {
     console.error("Menu loading error:", error);
-    grid.innerHTML = "<p>Could not load menu. Please refresh the page.</p>";
+    grid.innerHTML =
+      "<p>Could not load menu. Please refresh the page.</p>";
   }
 }
 
@@ -108,39 +154,55 @@ function renderMenu() {
   });
 
   if (!filteredItems.length) {
-    grid.innerHTML = "<p>No items found. Try another category or search.</p>";
+    grid.innerHTML =
+      "<p>No items found. Try another category or search.</p>";
     return;
   }
 
-  grid.innerHTML = filteredItems.map((item) => `
-    <article class="menu-card">
-      <div class="menu-card-image">
-        <img
-          src="${escapeHTML(item.image || "")}"
-          alt="${escapeHTML(item.name || "Menu item")}"
-          loading="lazy"
-          onerror="this.style.display='none'"
-        >
-        ${item.tag ? `<span class="menu-tag">${escapeHTML(item.tag)}</span>` : ""}
-      </div>
+  grid.innerHTML = filteredItems.map((item) => {
+    const imageUrl = getItemImage(item);
 
-      <div class="menu-card-content">
-        <h3>${escapeHTML(item.name || "Menu item")}</h3>
-        <p>${escapeHTML(item.desc || "")}</p>
-
-        <div class="menu-card-bottom">
-          <strong>${rupees(item.price)}</strong>
-          <button
-            type="button"
-            class="add-to-cart"
-            data-add="${escapeHTML(item.id)}"
+    return `
+      <article class="menu-card">
+        <div class="menu-card-image">
+          <img
+            src="${escapeHTML(imageUrl || FALLBACK_IMAGE)}"
+            alt="${escapeHTML(item.name || "Menu item")}"
+            loading="lazy"
+            onerror="setImageFallback(this)"
           >
-            Add to cart
-          </button>
+
+          ${
+            item.tag
+              ? `<span class="menu-tag">${escapeHTML(item.tag)}</span>`
+              : ""
+          }
         </div>
-      </div>
-    </article>
-  `).join("");
+
+        <div class="menu-card-content">
+          <h3>${escapeHTML(item.name || "Menu item")}</h3>
+          <p>${escapeHTML(item.desc || "")}</p>
+
+          <div class="menu-card-bottom">
+            <strong>${rupees(item.price)}</strong>
+
+            <button
+              type="button"
+              class="add-to-cart"
+              data-add="${escapeHTML(item.id)}"
+            >
+              Add to cart
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  // Add image error handlers after rendering.
+  grid.querySelectorAll(".menu-card-image img").forEach((img) => {
+    img.addEventListener("error", () => setImageFallback(img));
+  });
 
   grid.querySelectorAll("[data-add]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -291,6 +353,7 @@ function showLoginForm() {
   if (get("loginForm")) get("loginForm").hidden = false;
   if (get("signupForm")) get("signupForm").hidden = true;
   if (get("authTitle")) get("authTitle").textContent = "Login";
+
   if (get("authSubtitle")) {
     get("authSubtitle").textContent = "Welcome back! Please sign in.";
   }
@@ -300,6 +363,7 @@ function showSignupForm() {
   if (get("loginForm")) get("loginForm").hidden = true;
   if (get("signupForm")) get("signupForm").hidden = false;
   if (get("authTitle")) get("authTitle").textContent = "Create Account";
+
   if (get("authSubtitle")) {
     get("authSubtitle").textContent = "Create your Foodie Cafe account.";
   }
@@ -368,7 +432,6 @@ get("signupForm")?.addEventListener("submit", async (event) => {
 get("loginForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  // Read the exact IDs used in your index.html.
   const email = get("loginEmail")?.value.trim() || "";
   const password = get("loginPassword")?.value || "";
 
@@ -435,7 +498,9 @@ function logout() {
   localStorage.removeItem("foodieUser");
   currentUser = null;
 
-  if (get("profilePanel")) get("profilePanel").hidden = true;
+  if (get("profilePanel")) {
+    get("profilePanel").hidden = true;
+  }
 
   updateAuthUI();
   showToast("Logged out.");
