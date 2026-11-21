@@ -1,4 +1,5 @@
-// ================= FOODIE CAFE CONFIG =================
+
+ // ================= FOODIE CAFE CONFIG =================
 const API_BASE = "https://foodie-cafe-backend.onrender.com/api";
 
 // ================= STATE =================
@@ -114,35 +115,44 @@ function renderMenu() {
     return;
   }
 
-  grid.innerHTML = filteredItems.map((item) => `
-    <article class="menu-card">
-      <div class="menu-card-image">
-        <img
-          src="${escapeHTML(item.image || "")}"
-          alt="${escapeHTML(item.name || "Menu item")}"
-          loading="lazy"
-          onerror="this.style.display='none'"
-        >
-        ${item.tag ? `<span class="menu-tag">${escapeHTML(item.tag)}</span>` : ""}
-      </div>
+  grid.innerHTML = filteredItems.map((item) => {
+    // Use the new image for Velvet Cappuccino only.
+    const imageUrl = String(item.id) === "1"
+      ? "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=700&q=80"
+      : item.image || "";
 
-      <div class="menu-card-content">
-        <h3>${escapeHTML(item.name || "Menu item")}</h3>
-        <p>${escapeHTML(item.desc || "")}</p>
-
-        <div class="menu-card-bottom">
-          <strong>${rupees(item.price)}</strong>
-          <button
-            type="button"
-            class="add-to-cart"
-            data-add="${escapeHTML(item.id)}"
+    return `
+      <article class="menu-card">
+        <div class="menu-card-image">
+          <img
+            src="${escapeHTML(imageUrl)}"
+            alt="${escapeHTML(item.name || "Menu item")}"
+            loading="lazy"
+            onerror="this.style.display='none'"
           >
-            Add to cart
-          </button>
+
+          ${item.tag ? `<span class="menu-tag">${escapeHTML(item.tag)}</span>` : ""}
         </div>
-      </div>
-    </article>
-  `).join("");
+
+        <div class="menu-card-content">
+          <h3>${escapeHTML(item.name || "Menu item")}</h3>
+          <p>${escapeHTML(item.desc || "")}</p>
+
+          <div class="menu-card-bottom">
+            <strong>${rupees(item.price)}</strong>
+
+            <button
+              type="button"
+              class="add-to-cart"
+              data-add="${escapeHTML(item.id)}"
+            >
+              Add to cart
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
 
   grid.querySelectorAll("[data-add]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -180,14 +190,18 @@ if (get("menuSearch")) {
 
 // ================= CART =================
 function addToCart(itemId) {
-  const item = menuItems.find((menuItem) => String(menuItem.id) === String(itemId));
+  const item = menuItems.find(
+    (menuItem) => String(menuItem.id) === String(itemId)
+  );
 
   if (!item) {
     showToast("Item could not be found.");
     return;
   }
 
-  const existing = cart.find((cartItem) => String(cartItem.id) === String(itemId));
+  const existing = cart.find(
+    (cartItem) => String(cartItem.id) === String(itemId)
+  );
 
   if (existing) {
     existing.quantity += 1;
@@ -206,13 +220,18 @@ function addToCart(itemId) {
 }
 
 function changeQuantity(itemId, amount) {
-  const item = cart.find((cartItem) => String(cartItem.id) === String(itemId));
+  const item = cart.find(
+    (cartItem) => String(cartItem.id) === String(itemId)
+  );
+
   if (!item) return;
 
   item.quantity += amount;
 
   if (item.quantity <= 0) {
-    cart = cart.filter((cartItem) => String(cartItem.id) !== String(itemId));
+    cart = cart.filter(
+      (cartItem) => String(cartItem.id) !== String(itemId)
+    );
   }
 
   renderCart();
@@ -224,7 +243,10 @@ function renderCart() {
   const cartTotalElement = get("cartTotal");
 
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   if (cartCountElement) cartCountElement.textContent = count;
   if (cartTotalElement) cartTotalElement.textContent = rupees(total);
@@ -315,7 +337,8 @@ if (get("signupBtn")) {
 
 function formValue(form, names) {
   for (const name of names) {
-    const field = form.querySelector(`[name="${name}"]`) ||
+    const field =
+      form.querySelector(`[name="${name}"]`) ||
       form.querySelector(`#${name}`);
 
     if (field && field.value) return field.value.trim();
@@ -328,6 +351,7 @@ function setAuthStatus(message) {
   showToast(message);
 }
 
+// ================= SIGNUP =================
 if (get("signupForm")) {
   get("signupForm").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -349,10 +373,16 @@ if (get("signupForm")) {
         body: JSON.stringify({ name, email, mobile, password })
       });
 
-      if (result.token) localStorage.setItem("foodieToken", result.token);
-      if (result.user) localStorage.setItem("foodieUser", JSON.stringify(result.user));
+      if (result.token) {
+        localStorage.setItem("foodieToken", result.token);
+      }
+
+      if (result.user) {
+        localStorage.setItem("foodieUser", JSON.stringify(result.user));
+      }
 
       currentUser = result.user || null;
+
       updateAuthUI();
       form.reset();
       closeAuthPanel();
@@ -363,6 +393,7 @@ if (get("signupForm")) {
   });
 }
 
+// ================= LOGIN =================
 if (get("loginForm")) {
   get("loginForm").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -382,10 +413,16 @@ if (get("loginForm")) {
         body: JSON.stringify({ email, password })
       });
 
-      if (result.token) localStorage.setItem("foodieToken", result.token);
-      if (result.user) localStorage.setItem("foodieUser", JSON.stringify(result.user));
+      if (result.token) {
+        localStorage.setItem("foodieToken", result.token);
+      }
+
+      if (result.user) {
+        localStorage.setItem("foodieUser", JSON.stringify(result.user));
+      }
 
       currentUser = result.user || null;
+
       updateAuthUI();
       form.reset();
       closeAuthPanel();
@@ -396,6 +433,7 @@ if (get("loginForm")) {
   });
 }
 
+// ================= PROFILE =================
 function updateAuthUI() {
   const profileButton = get("profileBtn");
   const loginButton = get("loginBtn");
@@ -433,8 +471,10 @@ async function loadCurrentUser() {
     updateAuthUI();
   } catch (error) {
     console.warn("Could not load user profile:", error);
+
     localStorage.removeItem("foodieToken");
     localStorage.removeItem("foodieUser");
+
     currentUser = null;
     updateAuthUI();
   }
@@ -444,6 +484,7 @@ if (get("logoutBtn")) {
   get("logoutBtn").addEventListener("click", () => {
     localStorage.removeItem("foodieToken");
     localStorage.removeItem("foodieUser");
+
     currentUser = null;
     updateAuthUI();
     showToast("Logged out.");
@@ -510,6 +551,7 @@ if (get("checkoutButton")) {
       cart = [];
       renderCart();
       closeCart();
+
       showToast(result.message || "Order placed successfully.");
     } catch (error) {
       console.error("Order error:", error);
