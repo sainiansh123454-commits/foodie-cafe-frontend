@@ -24,7 +24,6 @@ function escapeHTML(value) {
 
 // ================= IMAGE HELPERS =================
 
-// A visible fallback image for items whose image URL is missing or broken.
 const FALLBACK_IMAGE =
   "data:image/svg+xml;charset=UTF-8," +
   encodeURIComponent(`
@@ -37,7 +36,16 @@ const FALLBACK_IMAGE =
     </svg>
   `);
 
+// Velvet Cappuccino image override.
+// This affects menu item id 1 only.
+const VELVET_CAPPUCCINO_IMAGE =
+  "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=700&q=80";
+
 function getItemImage(item) {
+  if (String(item?.id) === "1") {
+    return VELVET_CAPPUCCINO_IMAGE;
+  }
+
   const possibleImage =
     item?.image ||
     item?.imageUrl ||
@@ -53,7 +61,6 @@ function getItemImage(item) {
 function setImageFallback(img) {
   if (!img) return;
 
-  // Prevent an endless error loop if even the fallback cannot load.
   if (img.dataset.fallbackApplied === "true") {
     img.style.display = "none";
     return;
@@ -66,6 +73,7 @@ function setImageFallback(img) {
 }
 
 // ================= NOTIFICATIONS =================
+
 function showToast(message) {
   const toast = get("toast");
 
@@ -83,6 +91,7 @@ function showToast(message) {
 }
 
 // ================= API REQUESTS =================
+
 async function apiRequest(path, options = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -114,6 +123,7 @@ async function apiRequest(path, options = {}) {
 }
 
 // ================= MENU =================
+
 async function loadMenu() {
   const grid = get("menuGrid");
   if (!grid) return;
@@ -199,7 +209,6 @@ function renderMenu() {
     `;
   }).join("");
 
-  // Add image error handlers after rendering.
   grid.querySelectorAll(".menu-card-image img").forEach((img) => {
     img.addEventListener("error", () => setImageFallback(img));
   });
@@ -228,6 +237,7 @@ document.querySelectorAll(".filter-btn").forEach((button) => {
 get("menuSearch")?.addEventListener("input", renderMenu);
 
 // ================= CART =================
+
 function addToCart(itemId) {
   const item = menuItems.find(
     (menuItem) => String(menuItem.id) === String(itemId)
@@ -341,6 +351,7 @@ get("cartOverlay")?.addEventListener("click", (event) => {
 });
 
 // ================= LOGIN / SIGNUP PANEL =================
+
 function openAuthPanel() {
   get("authOverlay")?.classList.add("active");
 }
@@ -391,6 +402,7 @@ get("showSignup")?.addEventListener("click", showSignupForm);
 get("showLogin")?.addEventListener("click", showLoginForm);
 
 // ================= SIGNUP =================
+
 get("signupForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -429,6 +441,7 @@ get("signupForm")?.addEventListener("submit", async (event) => {
 });
 
 // ================= LOGIN =================
+
 get("loginForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -466,6 +479,7 @@ get("loginForm")?.addEventListener("submit", async (event) => {
 });
 
 // ================= PROFILE / LOGOUT =================
+
 function updateAuthUI() {
   if (get("profileBtn")) get("profileBtn").hidden = !currentUser;
   if (get("loginBtn")) get("loginBtn").hidden = !!currentUser;
@@ -530,6 +544,7 @@ get("profileBtn")?.addEventListener("click", () => {
 });
 
 // ================= CHECKOUT =================
+
 get("checkoutButton")?.addEventListener("click", async () => {
   if (!cart.length) {
     showToast("Your cart is empty.");
@@ -576,6 +591,7 @@ get("checkoutButton")?.addEventListener("click", async () => {
 });
 
 // ================= MOBILE MENU / FOOTER =================
+
 get("menuToggle")?.addEventListener("click", () => {
   get("nav")?.classList.toggle("active");
 });
@@ -585,6 +601,7 @@ if (get("year")) {
 }
 
 // ================= START =================
+
 renderCart();
 loadMenu();
 loadCurrentUser();
